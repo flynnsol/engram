@@ -1,0 +1,12 @@
+{
+  "name": "engram",
+  "description": "Claude Code plugin for a persistent Obsidian memory vault",
+  "owner": { "name": "Flynn" },
+  "plugins": [
+    {
+      "name": "engram",
+      "source": "./",
+      "description": "A persistent, Obsidian-native memory vault for Claude: memories, ideas, project plans and notes, heavily wikilinked."
+    }
+  ]
+}
