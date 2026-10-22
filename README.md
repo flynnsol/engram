@@ -1,7 +1,4 @@
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="res/engram-lockup-dark-bg.png">
-  <img alt="Engram" src="res/engram-lockup-light-bg.png" width="360">
-</picture>
+<img alt="Engram" src="res/engram-lockup-card.png" width="360">
 
 A persistent memory vault for Claude Code, stored as an [Obsidian](https://obsidian.md) vault so a human and an AI can both read, search and edit it.
 
