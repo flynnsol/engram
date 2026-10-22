@@ -1,6 +1,13 @@
-# Engram
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="res/engram-lockup-dark-bg.png">
+  <img alt="Engram" src="res/engram-lockup-light-bg.png" width="360">
+</picture>
 
 A persistent memory vault for Claude Code, stored as an [Obsidian](https://obsidian.md) vault so a human and an AI can both read, search and edit it.
+
+![Claude Code plugin](https://img.shields.io/badge/Claude_Code-plugin-D97757)
+![Obsidian](https://img.shields.io/badge/Obsidian-vault-7C3AED?logo=obsidian&logoColor=white)
+![License: MIT](https://img.shields.io/badge/license-MIT-green)
 
 Memories, ideas, project plans and notes live in one folder you choose. Every section has an overview, every overview links up to a root `INDEX`, and notes link to each other with `[[wikilinks]]`, so you can jump around in Obsidian and Claude can navigate top-down.
 
@@ -36,7 +43,7 @@ Each section has `<Section> Overview.md` with `Up: [[INDEX]]`, and every note ca
 ## Getting started
 
 ```bash
-claude plugin marketplace add /path/to/engram   # or the git URL once published
+claude plugin marketplace add https://gitlab.com/flynnsol/engram.git
 claude plugin install engram@engram
 ```
 
@@ -50,3 +57,7 @@ Then in Claude Code:
 Open that folder as a vault in Obsidian. The scaffold points new notes at `00-Inbox`, the Templates plugin at `99-Meta/Templates`, and daily notes at `05-Journal`. Install the Dataview community plugin if you want the live query blocks.
 
 To try a local checkout: `claude --plugin-dir /path/to/engram`.
+
+## License
+
+MIT, see [LICENSE](LICENSE).
