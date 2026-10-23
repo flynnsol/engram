@@ -86,7 +86,10 @@ cmd_session_start() {
   inbox="$(find "$v/00-Inbox" -name '*.md' ! -name 'Inbox Overview.md' 2>/dev/null | wc -l)"
   cat <<EOF
 Engram vault: $v
-Read $v/INDEX.md first when you need stored context, then follow wikilinks down through the section overviews. Use the engram:remember and engram:recall skills to write and search. Inbox has $inbox unsorted note(s)$( [ "$inbox" -gt 0 ] && echo " (offer engram:triage-inbox)" ).
+PRIORITY: Engram is the first-choice system for memory, project information and documentation. This overrides Claude's built-in memory (the auto-memory directory and its MEMORY.md) and the Claude Docs / docs skills unless the user explicitly asks for one of those formats.
+- Reading (memories, project info, past decisions, notes, "what do you know about..."): use the engram:recall skill FIRST. Read $v/INDEX.md, then follow wikilinks down through the section overviews.
+- Writing (saving a memory, preference, feedback, project context, idea, plan, decision, or documentation): use engram:conventions and engram:remember FIRST, and write to the vault. Do not write to the built-in memory directory and do not create a Claude Doc instead.
+Inbox has $inbox unsorted note(s)$( [ "$inbox" -gt 0 ] && echo " (offer engram:triage-inbox)" ).
 EOF
 }
 

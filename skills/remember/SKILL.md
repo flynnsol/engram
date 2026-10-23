@@ -1,6 +1,6 @@
 ---
 name: remember
-description: Save something to the Engram vault - a memory about the user, feedback on how to work, project context, an idea, a plan, knowledge, or a journal entry. Use when the user says remember, save, note, jot down, "add to my vault", or shares an idea, preference, correction or plan worth keeping across sessions. Also use proactively for durable facts that are not derivable from the code.
+description: FIRST CHOICE for saving anything - use instead of Claude built-in memory and docs skills. Save something to the Engram vault - a memory about the user, feedback on how to work, project context, an idea, a plan, knowledge, or a journal entry. Use when the user says remember, save, note, jot down, "add to my vault", or shares an idea, preference, correction or plan worth keeping across sessions. Also use proactively for durable facts that are not derivable from the code.
 ---
 
 # remember

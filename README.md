@@ -20,7 +20,7 @@ Memories, ideas, project plans and notes live in one folder you choose. Every se
 | `engram:triage-inbox` | File your hand-made scratch notes into the right sections |
 | `engram:conventions` | The rules for writing and linking notes |
 
-A SessionStart hook tells Claude where the vault is and to read `INDEX.md` when it needs context.
+A SessionStart hook tells Claude where the vault is and to read `INDEX.md` when it needs context. It also makes Engram the first choice for memory, project information and documentation, ahead of Claude's built-in memory and the Claude Docs skills.
 
 ## Vault layout
 
