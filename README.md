@@ -37,7 +37,7 @@ INDEX.md            root overview, links to every section
 00-Inbox/           drop scratch notes here by hand
 01-Projects/<Name>/ <Name> Overview, plan, decisions
                     Epics/<Epic>/  one folder per epic, holding the epic note
-                    Tickets/       every ticket, flat
+                      Tickets/     that epic's tickets
 02-Ideas/
 03-Knowledge/
 04-Memory/          user/ feedback/ project/ reference/
@@ -49,7 +49,7 @@ Each section has `<Section> Overview.md` with `Up: [[INDEX]]`, and every note ca
 
 ## Planning and executing work
 
-Projects are planned in the vault, not in an issue tracker. `engram:plan` interviews you and creates `<Name> Overview` and `<Name> Plan`, epics (`Epics/<Name> E1 Title/<Name> E1 Title.md`) and tickets (`Tickets/<Name> T1 Title.md`). Each ticket is a note with a `status` (`backlog`, `todo`, `doing`, `review`, `done`, `blocked`) that links up to its epic, so the `up` chain still reaches `INDEX`. `engram:work` moves tickets along, ticks them off in the epic, and closes epics and projects when everything is done. A Dataview block in the project Overview gives a live board.
+Projects are planned in the vault, not in an issue tracker. `engram:plan` interviews you and creates `<Name> Overview` and `<Name> Plan`, epics (`Epics/<Name> E1 Title/<Name> E1 Title.md`) and tickets (`Epics/<Name> E1 Title/Tickets/<Name> T1 Title.md`). Each ticket is a note with a `status` (`backlog`, `todo`, `doing`, `review`, `done`, `blocked`) that links up to its epic, so the `up` chain still reaches `INDEX`. `engram:work` moves tickets along, ticks them off in the epic, and closes epics and projects when everything is done. A Dataview block in the project Overview gives a live board.
 
 ## Getting started
 

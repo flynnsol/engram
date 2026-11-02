@@ -3,7 +3,7 @@
 
 usage: roadmap.py <vault> <Project Name>
 
-Reads every note under 01-Projects/<Project Name>/ (Epics/<epic>/ and Tickets/) with `type: epic` or `type: ticket`.
+Reads every note under 01-Projects/<Project Name>/ (Epics/<epic>/ and Epics/<epic>/Tickets/) with `type: epic` or `type: ticket`.
 One group per epic (ordered by E<n>), tickets stacked inside (ordered by T<n>),
 colored by status, with arrows for `blocked_by` (from blocker to blocked).
 Rewrites the canvas each run; hand edits to it are lost.

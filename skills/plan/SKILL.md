@@ -62,7 +62,7 @@ Show a compact summary (epics with ticket titles and days) and get a yes.
 
 1. **Project** (if new): folder `01-Projects/<Name>/` with `<Name> Overview` and `<Name> Plan` from the templates; list it in `[[Projects Overview]]` and `[[INDEX]]`.
 2. **Epics**: one folder per epic, `01-Projects/<Name>/Epics/<Name> E<n> <Title>/`, holding the epic's note of the same name (`<Name> E<n> <Title>.md`, from *Epic Template*, `status: backlog`). Listed in the Overview under *Epics*. Create the `Epics/` folder if it is missing.
-3. **Tickets**: all in one flat folder, `01-Projects/<Name>/Tickets/<Name> T<n> <Short title>.md` (create `Tickets/` if missing; no per-epic subfolders), from *Ticket Template*, `up` and `epic` pointing at the epic, `status: backlog`. Numbers continue from the highest existing for that project (search `Tickets/` first). Imperative titles ("Add OAuth callback handler").
+3. **Tickets**: inside their epic's folder, `01-Projects/<Name>/Epics/<epic>/Tickets/<Name> T<n> <Short title>.md` (create the epic's `Tickets/` if missing), from *Ticket Template*, `up` and `epic` pointing at the epic, `status: backlog`. Numbers continue from the highest existing for that project (numbering is project-wide, so search every `Tickets/` folder in the project first). Imperative titles ("Add OAuth callback handler").
 4. Fill the epic's `<!-- engram:tickets -->` list with `- [ ] [[Ticket]] — summary`.
 5. Add `[[Epic]]` entries to the project Overview and Plan; refresh `[[INDEX]]` "Recently updated".
 6. Build the roadmap with `engram:roadmap`.

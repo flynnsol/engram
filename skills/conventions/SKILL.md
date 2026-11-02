@@ -13,7 +13,7 @@ Get the vault path with `${CLAUDE_PLUGIN_ROOT}/scripts/engram.sh get`. The vault
 INDEX.md          root overview, links to every section overview
 00-Inbox/         unsorted, human-created scratch; Claude triages it
 01-Projects/<Name>/   <Name> Overview, <Name> Plan, decisions, logs
-                      Epics/<Epic>/<Epic>.md   Tickets/<Ticket>.md
+                      Epics/<Epic>/<Epic>.md   Epics/<Epic>/Tickets/<Ticket>.md
 02-Ideas/         one note per idea
 03-Knowledge/     durable reference, optional topic subfolders
 04-Memory/        user/ feedback/ project/ reference/  (one fact per note)
