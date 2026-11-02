@@ -17,10 +17,14 @@ Memories, ideas, project plans and notes live in one folder you choose. Every se
 | `/engram status` | Show the path, note count and inbox size |
 | `engram:remember` | Save a memory, idea, plan, decision, knowledge note or journal entry |
 | `engram:recall` | Look things up by navigating overviews and links |
-| `engram:triage-inbox` | File your hand-made scratch notes into the right sections |
+| `engram:triage` | File your hand-made scratch notes into the right sections |
+| `engram:plan` | Plan a project, epic or ticket through a short interview and create the notes |
+| `engram:work` | Show the board, pick up the next ticket, and close tickets, epics and projects |
+| `engram:roadmap` | Draw a project's epics, tickets and dependencies as an Obsidian canvas |
+| `engram:principles` | Small tickets (under 200 lines, 5 files), small epics (2 weeks or less), short notes |
 | `engram:conventions` | The rules for writing and linking notes |
 
-A SessionStart hook tells Claude where the vault is and to read `INDEX.md` when it needs context. It also makes Engram the first choice for memory, project information and documentation, ahead of Claude's built-in memory and the Claude Docs skills.
+A SessionStart hook tells Claude where the vault is and to read `INDEX.md` when it needs context. It also makes Engram the first choice for memory, project information and documentation, ahead of Claude's built-in memory and the Claude Docs skills. A UserPromptSubmit hook adds a reminder whenever a prompt looks like planning or executing work ("plan", "roadmap", "ticket", "what's next", "it's done"...), so `engram:plan` and `engram:work` are used first.
 
 ## Vault layout
 
@@ -36,6 +40,10 @@ INDEX.md            root overview, links to every section
 ```
 
 Each section has `<Section> Overview.md` with `Up: [[INDEX]]`, and every note carries an `up:` property so the chain always leads back to the root. Static lists in overviews are maintained by Claude; optional Dataview blocks give live views.
+
+## Planning and executing work
+
+Projects are planned in the vault, not in an issue tracker. `engram:plan` interviews you and creates `<Name> Overview` and `<Name> Plan`, epics (`<Name> E1 Title`) and tickets (`<Name> T1 Title`). Each ticket is a note with a `status` (`backlog`, `todo`, `doing`, `review`, `done`, `blocked`) that links up to its epic, so the `up` chain still reaches `INDEX`. `engram:work` moves tickets along, ticks them off in the epic, and closes epics and projects when everything is done. A Dataview block in the project Overview gives a live board.
 
 ## Getting started
 

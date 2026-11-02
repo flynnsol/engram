@@ -17,6 +17,8 @@ How the vault itself works.
   - [[Scratch Template]]
   - [[Project Overview Template]]
   - [[Project Plan Template]]
+  - [[Epic Template]]
+  - [[Ticket Template]]
   - [[Decision Template]]
   - [[Idea Template]]
   - [[Knowledge Template]]

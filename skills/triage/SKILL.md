@@ -1,9 +1,9 @@
 ---
-name: triage-inbox
+name: triage
 description: Sort the Engram vault's 00-Inbox - file each scratch note into the right section, add frontmatter and links, and update the overviews. Use when the user asks to triage, sort, clean up or file the inbox or scratch notes, or when the session start notice says the inbox has unsorted notes and the user agrees.
 ---
 
-# triage-inbox
+# triage
 
 Follow `engram:conventions`.
 

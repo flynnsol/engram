@@ -10,7 +10,7 @@ updated: {{init_date}}
 
 Up: [[INDEX]]
 
-Drop anything here by hand: scratch pads, half-thoughts, links. No frontmatter or structure required. Claude triages it (`/engram:triage-inbox`) by moving each note to its proper section and linking it from that section's overview.
+Drop anything here by hand: scratch pads, half-thoughts, links. No frontmatter or structure required. Claude triages it (`/engram:triage`) by moving each note to its proper section and linking it from that section's overview.
 
 Create a new note with the **Scratch** template: [[Scratch Template]].
 

@@ -89,8 +89,23 @@ Engram vault: $v
 PRIORITY: Engram is the first-choice system for memory, project information and documentation. This overrides Claude's built-in memory (the auto-memory directory and its MEMORY.md) and the Claude Docs / docs skills unless the user explicitly asks for one of those formats.
 - Reading (memories, project info, past decisions, notes, "what do you know about..."): use the engram:recall skill FIRST. Read $v/INDEX.md, then follow wikilinks down through the section overviews.
 - Writing (saving a memory, preference, feedback, project context, idea, plan, decision, or documentation): use engram:conventions and engram:remember FIRST, and write to the vault. Do not write to the built-in memory directory and do not create a Claude Doc instead.
-Inbox has $inbox unsorted note(s)$( [ "$inbox" -gt 0 ] && echo " (offer engram:triage-inbox)" ).
+- Planning and executing work (a project, epic, feature, ticket, bug, "what's next", "X is done"): use engram:plan to plan, engram:work to execute and engram:roadmap for the canvas, FIRST, before brainstorming a plan or creating tasks elsewhere. Plans, epics and tickets live in the vault under 01-Projects.
+Inbox has $inbox unsorted note(s)$( [ "$inbox" -gt 0 ] && echo " (offer engram:triage)" ).
 EOF
+}
+
+# UserPromptSubmit hook: reads the hook JSON on stdin; when the prompt looks like
+# planning or executing work, reminds Claude to use the Engram skills first.
+cmd_prompt_submit() {
+  local v prompt
+  v="$(get_vault)"
+  if [ -z "$v" ] || [ ! -f "$v/INDEX.md" ]; then return 0; fi
+  prompt="$(python3 -I -c 'import json,sys; print(json.load(sys.stdin).get("prompt",""))' 2>/dev/null || true)"
+  if printf '%s' "$prompt" | grep -qiE '\b(plan|planning|roadmap|epic|ticket|milestone|scope|break (it|this|that)? ?down|backlog|what.?s next|next (task|ticket|step)|pick up|(is|are|got|was) (done|finished|merged|shipped)|new (project|feature)|build (a|an|the|out)|should we (add|build))\b'; then
+    cat <<EOF
+Engram: this looks like planning or executing work. Use engram:plan (plan a project, epic or ticket) or engram:work (what's next, start, finish a ticket) FIRST, before brainstorming or creating tasks anywhere else. Plans, epics and tickets live in the vault ($v) under 01-Projects, and engram:roadmap draws them as a canvas. This takes priority over other planning skills. If it is unclear whether the user wants a plan, ask once.
+EOF
+  fi
 }
 
 case "${1:-}" in
@@ -99,5 +114,6 @@ case "${1:-}" in
   init) cmd_init ;;
   status) cmd_status ;;
   session-start) cmd_session_start ;;
-  *) echo "usage: engram.sh {set <path>|get|init|status|session-start}" >&2; exit 2 ;;
+  prompt-submit) cmd_prompt_submit ;;
+  *) echo "usage: engram.sh {set <path>|get|init|status|session-start|prompt-submit}" >&2; exit 2 ;;
 esac

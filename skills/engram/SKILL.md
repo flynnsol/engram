@@ -5,7 +5,7 @@ description: Manage the Engram Obsidian vault. Use for `/engram vaultpath <path>
 
 # engram
 
-Engram stores memories, ideas, project plans and notes in an Obsidian vault at a user-configured path. This skill handles setup. For day-to-day use see `engram:remember`, `engram:recall` and `engram:triage-inbox`; the vault rules are in `engram:conventions`.
+Engram stores memories, ideas, project plans and notes in an Obsidian vault at a user-configured path. This skill handles setup. For day-to-day use see `engram:remember`, `engram:recall` and `engram:triage`; for planning and executing work see `engram:plan` and `engram:work`; the vault rules are in `engram:conventions`.
 
 The helper script is `${CLAUDE_PLUGIN_ROOT}/scripts/engram.sh`. Parse the arguments after `/engram`:
 
