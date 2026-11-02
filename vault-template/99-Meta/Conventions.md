@@ -39,7 +39,7 @@ Memory notes also carry `memory_type: user | feedback | project | reference`. Up
 ## Structure
 
 - Section folders are numbered (`00-` to `05-`, `99-`) so sort order is stable. Do not rename them.
-- Projects: `01-Projects/<Name>/` holds `<Name> Overview`, `<Name> Plan`, epics (`<Name> E1 Title`), tickets (`<Name> T1 Title`), and decision/log notes. A ticket's `up` is its epic, an epic's `up` is the Overview. Change a ticket's `status` and tick it in its epic's list in the same step. Archive by setting `status: archived` and moving the entry in [[Projects Overview]]; do not delete.
+- Projects: `01-Projects/<Name>/` holds `<Name> Overview`, `<Name> Plan`, and decision/log notes. Epics live in `Epics/<Name> E1 Title/<Name> E1 Title.md` (one folder per epic, holding the epic note); tickets live flat in `Tickets/<Name> T1 Title.md`. A ticket's `up` is its epic, an epic's `up` is the Overview. Change a ticket's `status` and tick it in its epic's list in the same step. Archive by setting `status: archived` and moving the entry in [[Projects Overview]]; do not delete.
 - Inbox notes may have no structure. Anywhere else, follow the templates.
 
 ## Maintaining overviews

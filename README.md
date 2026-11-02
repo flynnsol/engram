@@ -24,7 +24,11 @@ Memories, ideas, project plans and notes live in one folder you choose. Every se
 | `engram:principles` | Small tickets (under 200 lines, 5 files), small epics (2 weeks or less), short notes |
 | `engram:conventions` | The rules for writing and linking notes |
 
-A SessionStart hook tells Claude where the vault is and to read `INDEX.md` when it needs context. It also makes Engram the first choice for memory, project information and documentation, ahead of Claude's built-in memory and the Claude Docs skills. A UserPromptSubmit hook adds a reminder whenever a prompt looks like planning or executing work ("plan", "roadmap", "ticket", "what's next", "it's done"...), so `engram:plan` and `engram:work` are used first.
+Three hooks keep Claude on the rails:
+
+- **SessionStart** tells Claude where the vault is and to read `INDEX.md` when it needs context. It makes Engram the first choice for memory, project information and documentation, ahead of Claude's built-in memory and the Claude Docs skills, and states the hard rule that new projects and features are planned in the vault before any code is written.
+- **UserPromptSubmit** adds a "required" reminder whenever a prompt is about planning, creating or executing work ("plan", "ticket", "what's next", "create a tool", "new repo", "set up a ... project"), and a softer one when the prompt is only a go-ahead ("let's do it"), because a go-ahead approves an idea and does not skip planning.
+- **PreToolUse** (`scripts/gate.py`) is the enforcement. It denies scaffold commands (`cargo new`, `dx new`, `npm create`, `uv init`, `rails new`, ...) and new manifest files (`Cargo.toml`, `package.json`, `pyproject.toml`, ...) unless the project already has a folder under `01-Projects`, matched by folder name or by the `local:` path in its Overview. Edits to existing files, sub-packages of an existing repo, and anything under `/tmp` are not gated. The gate fails open on internal errors, and `ENGRAM_GATE=off` disables it.
 
 ## Vault layout
 
@@ -32,6 +36,8 @@ A SessionStart hook tells Claude where the vault is and to read `INDEX.md` when 
 INDEX.md            root overview, links to every section
 00-Inbox/           drop scratch notes here by hand
 01-Projects/<Name>/ <Name> Overview, plan, decisions
+                    Epics/<Epic>/  one folder per epic, holding the epic note
+                    Tickets/       every ticket, flat
 02-Ideas/
 03-Knowledge/
 04-Memory/          user/ feedback/ project/ reference/
@@ -43,7 +49,7 @@ Each section has `<Section> Overview.md` with `Up: [[INDEX]]`, and every note ca
 
 ## Planning and executing work
 
-Projects are planned in the vault, not in an issue tracker. `engram:plan` interviews you and creates `<Name> Overview` and `<Name> Plan`, epics (`<Name> E1 Title`) and tickets (`<Name> T1 Title`). Each ticket is a note with a `status` (`backlog`, `todo`, `doing`, `review`, `done`, `blocked`) that links up to its epic, so the `up` chain still reaches `INDEX`. `engram:work` moves tickets along, ticks them off in the epic, and closes epics and projects when everything is done. A Dataview block in the project Overview gives a live board.
+Projects are planned in the vault, not in an issue tracker. `engram:plan` interviews you and creates `<Name> Overview` and `<Name> Plan`, epics (`Epics/<Name> E1 Title/<Name> E1 Title.md`) and tickets (`Tickets/<Name> T1 Title.md`). Each ticket is a note with a `status` (`backlog`, `todo`, `doing`, `review`, `done`, `blocked`) that links up to its epic, so the `up` chain still reaches `INDEX`. `engram:work` moves tickets along, ticks them off in the epic, and closes epics and projects when everything is done. A Dataview block in the project Overview gives a live board.
 
 ## Getting started
 

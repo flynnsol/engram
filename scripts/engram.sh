@@ -90,22 +90,39 @@ PRIORITY: Engram is the first-choice system for memory, project information and 
 - Reading (memories, project info, past decisions, notes, "what do you know about..."): use the engram:recall skill FIRST. Read $v/INDEX.md, then follow wikilinks down through the section overviews.
 - Writing (saving a memory, preference, feedback, project context, idea, plan, decision, or documentation): use engram:conventions and engram:remember FIRST, and write to the vault. Do not write to the built-in memory directory and do not create a Claude Doc instead.
 - Planning and executing work (a project, epic, feature, ticket, bug, "what's next", "X is done"): use engram:plan to plan, engram:work to execute and engram:roadmap for the canvas, FIRST, before brainstorming a plan or creating tasks elsewhere. Plans, epics and tickets live in the vault under 01-Projects.
+HARD RULE: before creating, scaffolding or building ANY new project, repo, app, tool, site, plugin or feature, you MUST run engram:recall and then engram:plan, and get the user's confirmation, BEFORE writing code or running a scaffold command. This is not optional and is not satisfied by planning in chat. A go-ahead like "let's do it" or "sounds good" approves the idea, it does not skip planning. A PreToolUse gate denies new-project scaffolding until the project has a folder under 01-Projects in the vault.
 Inbox has $inbox unsorted note(s)$( [ "$inbox" -gt 0 ] && echo " (offer engram:triage)" ).
 EOF
 }
 
 # UserPromptSubmit hook: reads the hook JSON on stdin; when the prompt looks like
-# planning or executing work, reminds Claude to use the Engram skills first.
+# planning, creating or executing work, reminds Claude to use the Engram skills first.
 cmd_prompt_submit() {
   local v prompt
   v="$(get_vault)"
   if [ -z "$v" ] || [ ! -f "$v/INDEX.md" ]; then return 0; fi
   prompt="$(python3 -I -c 'import json,sys; print(json.load(sys.stdin).get("prompt",""))' 2>/dev/null || true)"
-  if printf '%s' "$prompt" | grep -qiE '\b(plan|planning|roadmap|epic|ticket|milestone|scope|break (it|this|that)? ?down|backlog|what.?s next|next (task|ticket|step)|pick up|(is|are|got|was) (done|finished|merged|shipped)|new (project|feature)|build (a|an|the|out)|should we (add|build))\b'; then
+  local plan_re work_re create_re go_re
+  plan_re='\b(plan|planning|roadmap|epic|ticket|milestone|scope|break (it|this|that)? ?down|backlog|what.?s next|next (task|ticket|step)|pick up|(is|are|got|was) (done|finished|merged|shipped)|new (project|feature)|build (a|an|the|out)|should we (add|build))\b'
+  create_re='\b(create|make|start|set ?up|scaffold|bootstrap|spin up|kick ?off|initiali[sz]e|generate|design|implement|develop|write)\b[^.?!]{0,80}\b(project|repo|repository|app|application|tool|website|site|service|plugin|library|crate|package|feature|folder|cli|bot|game|dashboard|api|extension|generator)\b|\bnew (folder|repo|repository|app|tool|site|website|crate|package|plugin|service|project)\b|\bfrom scratch\b'
+  go_re="\\b(let.?s do it|lets do it|go ahead|sounds good|looks good|do it|ship it|make it so|yes,? (please|do|go))\\b"
+  if printf '%s' "$prompt" | grep -qiE "$plan_re|$create_re"; then
     cat <<EOF
-Engram: this looks like planning or executing work. Use engram:plan (plan a project, epic or ticket) or engram:work (what's next, start, finish a ticket) FIRST, before brainstorming or creating tasks anywhere else. Plans, epics and tickets live in the vault ($v) under 01-Projects, and engram:roadmap draws them as a canvas. This takes priority over other planning skills. If it is unclear whether the user wants a plan, ask once.
+Engram REQUIRED: this prompt is about planning, creating or executing work. Before writing code, scaffolding or creating files outside the vault, you MUST run engram:recall and then engram:plan (interview, confirm, create the notes), or engram:work for existing tickets. Plans, epics and tickets live in the vault ($v) under 01-Projects; engram:roadmap draws them as a canvas. This takes priority over other planning skills and over replying "let's go" straight into building. Only skip if this is a small edit inside an already-planned project; if unsure, ask once. A PreToolUse gate will deny new-project scaffolding until the project is planned.
+EOF
+  elif printf '%s' "$prompt" | grep -qiE "$go_re"; then
+    cat <<EOF
+Engram reminder: a go-ahead approves the idea, it does not skip planning. If the work you are about to start is a new project or feature that has no plan in the vault ($v/01-Projects), run engram:recall then engram:plan and get the user's confirmation BEFORE writing code or scaffolding.
 EOF
   fi
+}
+
+# PreToolUse hook: denies creating a brand-new project that has not been planned in the vault.
+cmd_pretool_gate() {
+  local v
+  v="$(get_vault)"
+  if [ -z "$v" ] || [ ! -f "$v/INDEX.md" ]; then return 0; fi
+  ENGRAM_VAULT="$v" python3 -I "$PLUGIN_ROOT/scripts/gate.py" || true
 }
 
 case "${1:-}" in
@@ -115,5 +132,6 @@ case "${1:-}" in
   status) cmd_status ;;
   session-start) cmd_session_start ;;
   prompt-submit) cmd_prompt_submit ;;
-  *) echo "usage: engram.sh {set <path>|get|init|status|session-start|prompt-submit}" >&2; exit 2 ;;
+  pretool-gate) cmd_pretool_gate ;;
+  *) echo "usage: engram.sh {set <path>|get|init|status|session-start|prompt-submit|pretool-gate}" >&2; exit 2 ;;
 esac

@@ -3,7 +3,7 @@
 
 usage: roadmap.py <vault> <Project Name>
 
-Reads 01-Projects/<Project Name>/*.md with `type: epic` or `type: ticket`.
+Reads every note under 01-Projects/<Project Name>/ (Epics/<epic>/ and Tickets/) with `type: epic` or `type: ticket`.
 One group per epic (ordered by E<n>), tickets stacked inside (ordered by T<n>),
 colored by status, with arrows for `blocked_by` (from blocker to blocked).
 Rewrites the canvas each run; hand edits to it are lost.
@@ -55,11 +55,13 @@ def main(vault, project):
     if not os.path.isdir(pdir):
         sys.exit("no such project folder: %s" % pdir)
     epics, tickets = {}, {}
-    for f in sorted(os.listdir(pdir)):
-        if not f.endswith(".md"):
-            continue
-        fm = front(os.path.join(pdir, f))
-        name = f[:-3]
+    paths = {}
+    for dirpath, _, files in os.walk(pdir):
+        for f in sorted(files):
+            if f.endswith(".md"):
+                paths[f[:-3]] = os.path.join(dirpath, f)
+    for name in sorted(paths):
+        fm = front(paths[name])
         if fm.get("type") == "epic":
             epics[name] = fm
         elif fm.get("type") == "ticket":
@@ -67,7 +69,7 @@ def main(vault, project):
     if not epics and not tickets:
         sys.exit("no epics or tickets in %s" % pdir)
 
-    rel = lambda n: "01-Projects/%s/%s.md" % (project, n)
+    rel = lambda n: os.path.relpath(paths[n], vault).replace(os.sep, "/")
     nodes, edges, where = [], [], {}
     order = sorted(epics, key=lambda n: (num(n, "E"), n))
     by_epic = {e: [] for e in order}

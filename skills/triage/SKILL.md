@@ -13,4 +13,5 @@ Follow `engram:conventions`.
 4. **For each note**: move it (keeping content), add or fix frontmatter and the `up` link/`Up:` line, make the filename unique vault-wide, add wikilinks to related notes, and list it under the right marker in its destination overview. A note that is really several things becomes several notes, linked to each other.
 5. **Leave anything ambiguous** in the inbox and ask about it at the end.
 6. **Never delete** original content. If a note is pure noise, ask first.
-7. Refresh `[[INDEX]]` "Recently updated" and report: what moved where, using `[[links]]`.
+7. **Tidy project folders**: in each `01-Projects/<Name>/`, find notes with `type: epic` or `type: ticket` that sit loose in the project root or in the wrong place. Move each epic into `Epics/<epic name>/<epic name>.md` (a folder per epic) and each ticket into `Tickets/`, creating those folders if needed. Moving by name keeps wikilinks working; if `<Name> Roadmap.canvas` exists, regenerate it with `engram:roadmap` since canvas cards use file paths. Include this in the plan shown in step 3.
+8. Refresh `[[INDEX]]` "Recently updated" and report: what moved where, using `[[links]]`.

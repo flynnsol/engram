@@ -1,11 +1,29 @@
 ---
 name: plan
-description: Use this first for any planning. Plan a project, an epic (one feature, 2 weeks or less) or a single ticket in the Engram vault through a short guided interview, then create the notes. Use when the user describes a new project, product, roadmap or feature, says "plan", "scope", "break down" or "where do we start", or wants to file one bug, task or chore. Creates nothing until the user confirms.
+description: MANDATORY first step before creating, scaffolding or building any new project, repo, app, tool, site, plugin or feature, even when the user says "let's do it" or "go ahead". Plan a project, an epic (one feature, 2 weeks or less) or a single ticket in the Engram vault through a short guided interview, then create the notes. Use when the user describes a new project, product, roadmap or feature, asks to create or make something, says "plan", "scope", "break down" or "where do we start", or wants to file one bug, task or chore. Creates nothing until the user confirms.
 ---
 
 # plan
 
 Turn an idea into vault notes: a project (`<Name> Overview` + `<Name> Plan`), epics, and small tickets. Interview first, create last. Follow `engram:conventions` and `engram:principles`.
+
+## Hard gate (read first)
+
+This skill is **required, not advisory**. Run it, and get the user's confirmation, **before** any of these:
+
+- writing code or config for a new project, repo, app, tool, site, plugin or feature
+- running a scaffold command (`cargo new`, `dx new`, `npm create`, `uv init`, `rails new`, ...) or creating the project folder
+- brainstorming a plan in chat instead of in the vault
+
+Rules that close the usual loopholes:
+
+- **A go-ahead is not a plan.** "Let's do it", "sounds good", "go ahead" and picking a name approve the *idea*. They never skip the interview and the vault notes.
+- **Planning in chat does not count.** The plan must exist as notes under `01-Projects/<Name>/` (an Overview and a Plan at minimum).
+- **Do it first, not afterwards.** Do not scaffold now and promise to backfill later. If you already did, say so plainly, then run this skill.
+- **Smallest exception:** a tiny edit inside a project that already has a folder under `01-Projects` needs no new plan (use `engram:work`). If unsure whether something is "new", ask once.
+- If the user explicitly says to skip planning, create the minimal notes (Overview and Plan, no epics) and carry on. Do not skip the vault.
+
+A `PreToolUse` gate backs this up: it denies new-project scaffolding and new manifest files (`Cargo.toml`, `package.json`, `pyproject.toml`, ...) until the project has a folder under `01-Projects`. If the gate denies a call, run this skill; do not look for a way around it.
 
 ## Pick the level
 
@@ -43,8 +61,8 @@ Show a compact summary (epics with ticket titles and days) and get a yes.
 ## Create
 
 1. **Project** (if new): folder `01-Projects/<Name>/` with `<Name> Overview` and `<Name> Plan` from the templates; list it in `[[Projects Overview]]` and `[[INDEX]]`.
-2. **Epics**: `<Name> E<n> <Title>.md` from *Epic Template*, in the project folder, `status: backlog`, listed in the Overview under *Epics*.
-3. **Tickets**: `<Name> T<n> <Short title>.md` from *Ticket Template*, `up` and `epic` pointing at the epic, `status: backlog`. Numbers continue from the highest existing for that project (search the folder first). Imperative titles ("Add OAuth callback handler").
+2. **Epics**: one folder per epic, `01-Projects/<Name>/Epics/<Name> E<n> <Title>/`, holding the epic's note of the same name (`<Name> E<n> <Title>.md`, from *Epic Template*, `status: backlog`). Listed in the Overview under *Epics*. Create the `Epics/` folder if it is missing.
+3. **Tickets**: all in one flat folder, `01-Projects/<Name>/Tickets/<Name> T<n> <Short title>.md` (create `Tickets/` if missing; no per-epic subfolders), from *Ticket Template*, `up` and `epic` pointing at the epic, `status: backlog`. Numbers continue from the highest existing for that project (search `Tickets/` first). Imperative titles ("Add OAuth callback handler").
 4. Fill the epic's `<!-- engram:tickets -->` list with `- [ ] [[Ticket]] — summary`.
 5. Add `[[Epic]]` entries to the project Overview and Plan; refresh `[[INDEX]]` "Recently updated".
 6. Build the roadmap with `engram:roadmap`.

@@ -1,6 +1,6 @@
 ---
 name: work
-description: Execute planned work from the Engram vault - show the board, pick up the next ticket, move tickets between backlog/todo/doing/review/done/blocked, and close tickets, epics and projects when done. Use when the user says what's next, what's in progress, start or pick up a ticket, or that a ticket, PR, feature or epic is done, merged or shipped.
+description: Execute planned work (planned means a project folder exists under 01-Projects; for anything new, run engram:plan first) from the Engram vault - show the board, pick up the next ticket, move tickets between backlog/todo/doing/review/done/blocked, and close tickets, epics and projects when done. Use when the user says what's next, what's in progress, start or pick up a ticket, or that a ticket, PR, feature or epic is done, merged or shipped.
 ---
 
 # work
@@ -8,6 +8,10 @@ description: Execute planned work from the Engram vault - show the board, pick u
 Tickets and epics are vault notes (see `engram:plan`). Status lives in each note's `status` frontmatter; moving work means editing it and keeping the lists in sync. Follow `engram:conventions` and `engram:principles`.
 
 Statuses: `backlog` → `todo` → `doing` → `review` → `done`, optional `blocked`.
+
+## Gate
+
+Work only starts on planned work. If the user asks to build something that has no project folder or ticket in the vault, stop and run `engram:plan` first; a go-ahead such as "let's do it" does not replace a plan. If a ticket is growing past one commit or PR, stop and split it with `engram:plan`.
 
 ## Board / what's next
 
