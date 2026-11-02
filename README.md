@@ -40,7 +40,7 @@ Each section has `<Section> Overview.md` with `Up: [[INDEX]]`, and every note ca
 ## Getting started
 
 ```bash
-claude plugin marketplace add https://gitlab.com/flynnsol/engram.git
+claude plugin marketplace add https://github.com/flynnsol/engram.git
 claude plugin install engram@engram
 ```
 
