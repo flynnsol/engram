@@ -3,6 +3,11 @@
 All notable changes to the Engram plugin. Versions match `.claude-plugin/plugin.json`.
 Newest first; `tests/test_release.py` checks that the top entry matches the plugin version.
 
+## 0.4.0 - 2026-11-07
+
+- Added: `engram.sh ticket <ticket> <status>`, `close-epic` and `close-project`. One call sets the status, bumps `updated`, ticks the epic checklist, starts the epic, enforces `blocked_by`, moves finished projects to the done lists and rebuilds the roadmap canvas.
+- Changed: the `work`, `plan` and `roadmap` skills use these commands instead of hand edits.
+
 ## 0.3.0 - 2026-11-07
 
 - Added: `engram.sh search <terms>`, ranked by title, tags, description and body, one line per hit.

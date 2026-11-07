@@ -90,6 +90,12 @@ cmd_lint() {
   python3 -I "$PLUGIN_ROOT/scripts/vault.py" "$v" lint "$@"
 }
 
+cmd_work() {
+  local v
+  v="$(require_vault)"
+  python3 -I "$PLUGIN_ROOT/scripts/work.py" "$v" "$@"
+}
+
 # Emits context for the SessionStart hook (stdout is added to the session).
 cmd_session_start() {
   local v
@@ -152,5 +158,6 @@ case "${1:-}" in
   pretool-gate) cmd_pretool_gate ;;
   search) shift; cmd_search "$@" ;;
   lint) shift; cmd_lint "$@" ;;
-  *) echo "usage: engram.sh {set <path>|get|init|status|session-start|prompt-submit|pretool-gate|search <terms>|lint [--summary]}" >&2; exit 2 ;;
+  ticket|close-epic|close-project) cmd_work "$@" ;;
+  *) echo "usage: engram.sh {set <path>|get|init|status|session-start|prompt-submit|pretool-gate|search <terms>|lint [--summary]|ticket <ticket> <status>|close-epic <epic>|close-project <name>}" >&2; exit 2 ;;
 esac

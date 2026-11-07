@@ -10,7 +10,7 @@ Follow `engram:conventions`.
 ## Project roadmap
 
 1. Get the vault (`${CLAUDE_PLUGIN_ROOT}/scripts/engram.sh get`) and the exact project folder name under `01-Projects/`.
-2. Run `python3 -I "${CLAUDE_PLUGIN_ROOT}/scripts/roadmap.py" "<vault>" "<Project Name>"`. It writes `01-Projects/<Name>/<Name> Roadmap.canvas` from the epic and ticket notes (found anywhere under the project folder, normally `Epics/<epic>/` and `Epics/<epic>/Tickets/`): one group per epic in `E<n>` order, tickets as file cards in `T<n>` order, colored by `status` (cyan todo, yellow doing, purple review, green done, red blocked, none backlog), arrows from each `blocked_by` entry to the blocked note.
+2. (`engram.sh ticket`, `close-epic` and `close-project` already do this for you.) Run `python3 -I "${CLAUDE_PLUGIN_ROOT}/scripts/roadmap.py" "<vault>" "<Project Name>"`. It writes `01-Projects/<Name>/<Name> Roadmap.canvas` from the epic and ticket notes (found anywhere under the project folder, normally `Epics/<epic>/` and `Epics/<epic>/Tickets/`): one group per epic in `E<n>` order, tickets as file cards in `T<n>` order, colored by `status` (cyan todo, yellow doing, purple review, green done, red blocked, none backlog), arrows from each `blocked_by` entry to the blocked note.
 3. First time only: list `[[<Name> Roadmap]]` in the project Overview under *Notes in this project* (`<Name> Roadmap.canvas` is the file; link it as `[[<Name> Roadmap.canvas]]`).
 4. Report the counts it printed. Tell the user to nudge cards if the layout needs it.
 

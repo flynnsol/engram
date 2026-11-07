@@ -6,7 +6,7 @@
     {
       "name": "engram",
       "source": "./",
-      "version": "0.3.0",
+      "version": "0.4.0",
       "description": "A persistent, Obsidian-native memory vault for Claude: memories, ideas, project plans and notes, heavily wikilinked."
     }
   ]
