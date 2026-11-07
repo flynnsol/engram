@@ -11,9 +11,12 @@ Rewrites the canvas each run; hand edits to it are lost.
 import hashlib, json, os, re, sys
 
 COLORS = {"todo": "5", "doing": "3", "review": "6", "done": "4", "blocked": "1"}
-COL_W, GAP, PAD = 320, 90, 30
-HEAD_H, TICKET_H, ROW_GAP = 90, 80, 20
-TOP = 170  # room for the title/legend row
+# Roomy on purpose: file cards embed the whole note, so they need height for the
+# title and breathing space; Obsidian's own inner padding can't be changed.
+COL_W, GAP, PAD = 440, 160, 60
+LABEL_PAD = 100  # top of a group: room for its label
+HEAD_H, TICKET_H, ROW_GAP = 190, 170, 50
+TOP = 260  # room for the title/legend row
 
 
 def front(path):
@@ -84,13 +87,13 @@ def main(vault, project):
     x = 0
     for e in order:
         ts = sorted(by_epic[e], key=lambda n: (num(n, "T"), n))
-        h = PAD * 2 + (HEAD_H + ROW_GAP if e else 0) + len(ts) * (TICKET_H + ROW_GAP)
+        h = LABEL_PAD + PAD + (HEAD_H + ROW_GAP if e else 0) + len(ts) * (TICKET_H + ROW_GAP)
         gx, gy, gw = x, TOP, COL_W + PAD * 2
         label = (re.sub(r"^.*? E\d+ ", "", e) if e else "No epic")
         nodes.append({"id": nid("g" + str(e)), "type": "group", "label": label,
                       "x": gx, "y": gy, "width": gw, "height": h})
         where[e or "_"] = (gx, gy, gw, h)
-        y = gy + PAD
+        y = gy + LABEL_PAD
         if e:
             node = {"id": nid(rel(e)), "type": "file", "file": rel(e),
                     "x": gx + PAD, "y": y, "width": COL_W, "height": HEAD_H}
@@ -127,7 +130,7 @@ def main(vault, project):
             edges.append({"id": nid("e%s>%s" % (s_id, t_id)), "fromNode": s_id, "fromSide": fs,
                           "toNode": t_id, "toSide": ts_, "toEnd": "arrow"})
 
-    nodes.insert(0, {"id": nid("title"), "type": "text", "x": 0, "y": 0, "width": 520, "height": 130,
+    nodes.insert(0, {"id": nid("title"), "type": "text", "x": 0, "y": 0, "width": 640, "height": 190,
                      "text": "# %s roadmap\n\nColor = status: cyan todo, yellow doing, purple review, green done, red blocked, none backlog. Arrows point from blocker to blocked." % project})
     out = os.path.join(pdir, "%s Roadmap.canvas" % project)
     with open(out, "w", encoding="utf-8") as fh:
