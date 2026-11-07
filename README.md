@@ -21,15 +21,16 @@ Memories, ideas, project plans and notes live in one folder you choose. Every se
 | `engram:recall` | Look things up by navigating overviews and links |
 | `engram:triage` | File your hand-made scratch notes into the right sections |
 | `engram:plan` | Plan a project, epic or ticket through a short interview and create the notes |
-| `engram:work` | Show the board, pick up the next ticket, and close tickets, epics and projects |
+| `engram:work` | Show the board, pick up the next ticket, and close tickets, epics and projects (`engram.sh ticket`, `close-epic`, `close-project` do the bookkeeping) |
 | `engram:roadmap` | Draw a project's epics, tickets and dependencies as an Obsidian canvas |
 | `engram:principles` | Small tickets (under 200 lines, 5 files), small epics (2 weeks or less), short notes |
 | `engram:conventions` | The rules for writing and linking notes |
 
-Three hooks keep Claude on the rails:
+Four hooks keep Claude on the rails (the fourth, Stop, is opt-in):
 
-- **SessionStart** tells Claude where the vault is and to read `INDEX.md` when it needs context. It makes Engram the first choice for memory, project information and documentation, ahead of Claude's built-in memory and the Claude Docs skills, and states the hard rule that new projects and features are planned in the vault before any code is written.
-- **UserPromptSubmit** adds a "required" reminder whenever a prompt is about planning, creating or executing work ("plan", "ticket", "what's next", "create a tool", "new repo", "set up a ... project"), and a softer one when the prompt is only a go-ahead ("let's do it"), because a go-ahead approves an idea and does not skip planning.
+- **SessionStart** tells Claude where the vault is and to read `INDEX.md` when it needs context. It makes Engram the first choice for memory, project information and documentation, ahead of Claude's built-in memory and the Claude Docs skills, and states the hard rule that new projects and features are planned in the vault before any code is written. It also adds a short "where things stand" digest: tickets in flight, the next unblocked ticket when the session starts in a planned project's checkout, and the last journal entry.
+- **UserPromptSubmit** adds a "required" reminder whenever a prompt is about planning, creating or executing work ("plan", "ticket", "what's next", "create a tool", "new repo", "set up a ... project"), and a softer one when the prompt is only a go-ahead; inside a planned project's checkout the reminder shrinks to one line, and a bare go-ahead is silent ("let's do it"), because a go-ahead approves an idea and does not skip planning.
+- **Stop** (opt-in, `ENGRAM_STOP_LINT=on`) runs `engram.sh lint` when vault notes changed in the last hour and asks Claude, once, to fix any errors before it stops.
 - **PreToolUse** (`scripts/gate.py`) is the enforcement. It denies scaffold commands (`cargo new`, `dx new`, `npm create`, `uv init`, `rails new`, ...) and new manifest files (`Cargo.toml`, `package.json`, `pyproject.toml`, ...) unless the project already has a folder under `01-Projects`, matched by folder name or by the `local:` path in its Overview. Edits to existing files, sub-packages of an existing repo, and anything under `/tmp` are not gated. The gate fails open on internal errors, and `ENGRAM_GATE=off` disables it.
 
 ## Vault layout

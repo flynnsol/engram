@@ -3,6 +3,8 @@
 
   vault.py <vault> search <term...> [--limit N]
   vault.py <vault> lint [--summary]
+  vault.py <vault> digest [cwd]        tickets in flight, next ticket here, last journal
+  vault.py <vault> project-of <cwd>    name of the planned project that owns cwd
 
 search ranks notes by title, tags, description and body matches and prints one line per hit.
 lint checks the link chain and ticket/epic consistency; exit status 1 when it finds errors.
@@ -181,6 +183,54 @@ def lint(vault):
     return sorted(out, key=lambda o: (o[0] != "error", o[1], o[2]))
 
 
+def project_for_cwd(vault, cwd):
+    """Name of the planned project whose `local:` checkout contains cwd, else ''."""
+    cwd = os.path.realpath(cwd)
+    best, found = "", ""
+    root = os.path.join(vault, "01-Projects")
+    for name in sorted(os.listdir(root)) if os.path.isdir(root) else []:
+        ov = os.path.join(root, name, name + " Overview.md")
+        if not os.path.isfile(ov):
+            continue
+        with open(ov, encoding="utf-8", errors="replace") as fh:
+            for m in re.finditer(r"local:\s*`([^`]+)`", fh.read()):
+                path = os.path.realpath(os.path.expanduser(m.group(1)))
+                if (cwd == path or cwd.startswith(path + os.sep)) and len(path) > len(best):
+                    best, found = path, name
+    return found
+
+
+def digest(vault, cwd=""):
+    """A few lines for session start: tickets in flight, this project's next ticket, last journal."""
+    notes = load(vault)
+    tickets = [n for n in notes.values() if n["fm"].get("type") == "ticket"]
+    lines = []
+    flight = [t for t in tickets if t["fm"].get("status") in ("doing", "blocked", "review")]
+    for t in sorted(flight, key=lambda t: t["name"])[:8]:
+        lines.append("- %s: [[%s]]" % (t["fm"]["status"], t["name"]))
+    here = project_for_cwd(vault, cwd) if cwd else ""
+    if here:
+        done = {t["name"] for t in tickets if t["fm"].get("status") == "done"}
+
+        def blockers_done(t):
+            bb = t["fm"].get("blocked_by")
+            return all(target(b.strip("[]")) in done for b in bb) if isinstance(bb, list) else True
+
+        def num(t):
+            m = re.search(r" T(\d+) ", t["name"])
+            return int(m.group(1)) if m else 9999
+
+        todo = [t for t in tickets if "[[%s Overview" % here in t["fm"].get("project", "")
+                and t["fm"].get("status") in ("todo", "backlog") and blockers_done(t)]
+        todo.sort(key=lambda t: (t["fm"].get("status") != "todo", num(t), t["name"]))
+        nxt = "; next unblocked: [[%s]]" % todo[0]["name"] if todo else ""
+        lines.insert(0, "- working in planned project %s%s" % (here, nxt))
+    journal = sorted(r for r in notes if r.startswith("05-Journal") and "Overview" not in r)
+    if journal:
+        lines.append("- last journal entry: [[%s]]" % notes[journal[-1]]["name"])
+    return lines
+
+
 def main(argv):
     if len(argv) < 3:
         print(__doc__, file=sys.stderr)
@@ -207,6 +257,13 @@ def main(argv):
                 print("%s %s: %s" % (level.upper(), rel, msg))
             print("%d error(s), %d warning(s)" % (errors, warns))
         return 1 if errors else 0
+    if cmd == "project-of":
+        print(project_for_cwd(vault, rest[0] if rest else os.getcwd()))
+        return 0
+    if cmd == "digest":
+        for l in digest(vault, rest[0] if rest else ""):
+            print(l)
+        return 0
     print("unknown command: " + cmd, file=sys.stderr)
     return 2
 

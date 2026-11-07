@@ -16,7 +16,7 @@ class VaultCase(unittest.TestCase):
         self.env = dict(os.environ, XDG_CONFIG_HOME=os.path.join(self.tmp, "cfg"), HOME=self.tmp)
         self.env.pop("ENGRAM_GATE", None)
 
-    def sh(self, *args, stdin=None):
+    def sh(self, *args, stdin=""):
         return subprocess.run([ENGRAM_SH, *args], input=stdin, capture_output=True, text=True, env=self.env)
 
     def init_vault(self):

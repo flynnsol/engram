@@ -1,6 +1,6 @@
 {
   "name": "engram",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "A persistent, Obsidian-native memory vault for Claude: memories, ideas, project plans and notes, organized and heavily wikilinked for both a human and an AI.",
   "author": { "name": "Flynn", "email": "flynn@crezia.net" }
 }

@@ -38,7 +38,7 @@ TABLE status, epic, estimate_days FROM "01-Projects/<Name>" WHERE type = "ticket
 1. Confirm which ticket (from the user's words, branch name, or the next unblocked one). Read it and its epic.
 2. Check `blocked_by` are done; if not, say so and ask.
 3. Run `engram.sh ticket "<ticket>" doing`, and work it. Keep to one commit or PR under 200 lines and 5 files; if it is growing past that, stop and split it (new tickets via `engram:plan`).
-4. When opening a PR, set `status: review` and note the commit or PR link under *Notes*.
+4. When opening a PR, run `engram.sh ticket "<ticket>" review` and note the commit or PR link under *Notes*.
 
 ## Ticket done
 

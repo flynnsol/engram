@@ -3,6 +3,12 @@
 All notable changes to the Engram plugin. Versions match `.claude-plugin/plugin.json`.
 Newest first; `tests/test_release.py` checks that the top entry matches the plugin version.
 
+## 0.5.0 - 2026-11-07
+
+- Added: SessionStart digest ("Where things stand"): tickets in flight, the next unblocked ticket when the session starts inside a planned project, and the last journal entry.
+- Changed: the prompt-submit reminder is one short line inside a planned project (matched by the Overview's `local:` path) and silent for a bare go-ahead.
+- Added: opt-in Stop hook. With `ENGRAM_STOP_LINT=on`, if vault notes changed in the last hour and lint finds errors, Claude is asked once to fix them before stopping.
+
 ## 0.4.0 - 2026-11-07
 
 - Added: `engram.sh ticket <ticket> <status>`, `close-epic` and `close-project`. One call sets the status, bumps `updated`, ticks the epic checklist, starts the epic, enforces `blocked_by`, moves finished projects to the done lists and rebuilds the roadmap canvas.
