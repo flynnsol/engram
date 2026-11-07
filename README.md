@@ -69,6 +69,14 @@ Open that folder as a vault in Obsidian. The scaffold points new notes at `00-In
 
 To try a local checkout: `claude --plugin-dir /path/to/engram`.
 
+## Development
+
+```bash
+python3 -m unittest discover -s tests -t tests
+```
+
+The tests cover the gate, the prompt hook, `init`, `roadmap.py` and version sync (`plugin.json`, `marketplace.json`, `CHANGELOG.md`). Bump all three together.
+
 ## License
 
 MIT, see [LICENSE](LICENSE).

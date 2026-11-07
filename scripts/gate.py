@@ -146,6 +146,9 @@ def main() -> None:
             tokens = shlex.split(cmd, comments=False, posix=True)
         except ValueError:
             tokens = cmd.split()
+        # A scaffold target under /tmp is scratch work, wherever the command runs from.
+        if scaffold and any(in_tmp(os.path.join(cwd, t)) for t in tokens if t.startswith(("/", "./", "../", "~"))):
+            return
         # Any word in the command, or the working directory, naming a planned project is enough.
         candidates = {norm(os.path.basename(t.rstrip("/"))) for t in tokens if not t.startswith("-")}
         candidates.add(norm(os.path.basename(cwd)))

@@ -51,10 +51,14 @@ cmd_init() {
   v="$(require_vault)"
   today="$(date +%F)"
   mkdir -p "$v"
-  # -n: never overwrite files that already exist in the vault.
-  cp -rn "$TEMPLATE_DIR"/. "$v"/
+  # Copy only what is missing; never overwrite files that already exist in the vault.
+  # (cp -n exits 1 when it skips a file on newer coreutils, so it is not used here.)
+  (cd "$TEMPLATE_DIR" && find . -type d -print0) | while IFS= read -r -d '' d; do mkdir -p "$v/$d"; done
+  (cd "$TEMPLATE_DIR" && find . -type f -print0) | while IFS= read -r -d '' f; do
+    [ -e "$v/$f" ] || cp "$TEMPLATE_DIR/$f" "$v/$f"
+  done
   # Fill date placeholders only in files that still contain them.
-  grep -rlF '{{init_date}}' "$v" --include='*.md' 2>/dev/null | while read -r f; do
+  { grep -rlF '{{init_date}}' "$v" --include='*.md' 2>/dev/null || true; } | while read -r f; do
     sed -i "s/{{init_date}}/$today/g" "$f"
   done
   echo "Vault initialized at: $v"
