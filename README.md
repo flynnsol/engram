@@ -29,7 +29,7 @@ Memories, ideas, project plans and notes live in one folder you choose. Every se
 Four hooks keep Claude on the rails (the fourth, Stop, is opt-in):
 
 - **SessionStart** tells Claude where the vault is and to read `INDEX.md` when it needs context. It makes Engram the first choice for memory, project information and documentation, ahead of Claude's built-in memory and the Claude Docs skills, and states the hard rule that new projects and features are planned in the vault before any code is written. It also adds a short "where things stand" digest: tickets in flight, the next unblocked ticket when the session starts in a planned project's checkout, and the last journal entry.
-- **UserPromptSubmit** adds a "required" reminder whenever a prompt is about planning, creating or executing work ("plan", "ticket", "what's next", "create a tool", "new repo", "set up a ... project"), and a softer one when the prompt is only a go-ahead; inside a planned project's checkout the reminder shrinks to one line, and a bare go-ahead is silent ("let's do it"), because a go-ahead approves an idea and does not skip planning.
+- **UserPromptSubmit** adds a "required" reminder whenever a prompt is about planning, creating or executing work ("plan", "ticket", "what's next", "create a tool", "new repo", "set up a ... project"), and a softer one when the prompt is only a go-ahead ("let's do it"), because a go-ahead approves an idea and does not skip planning. Inside a planned project's checkout (matched by the Overview's `local:` path) the reminder shrinks to one line, and a bare go-ahead is silent.
 - **Stop** (opt-in, `ENGRAM_STOP_LINT=on`) runs `engram.sh lint` when vault notes changed in the last hour and asks Claude, once, to fix any errors before it stops.
 - **PreToolUse** (`scripts/gate.py`) is the enforcement. It denies scaffold commands (`cargo new`, `dx new`, `npm create`, `uv init`, `rails new`, ...) and new manifest files (`Cargo.toml`, `package.json`, `pyproject.toml`, ...) unless the project already has a folder under `01-Projects`, matched by folder name or by the `local:` path in its Overview. Edits to existing files, sub-packages of an existing repo, and anything under `/tmp` are not gated. The gate fails open on internal errors, and `ENGRAM_GATE=off` disables it.
 
@@ -53,6 +53,18 @@ Each section has `<Section> Overview.md` with `Up: [[INDEX]]`, and every note ca
 ## Planning and executing work
 
 Projects are planned in the vault, not in an issue tracker. `engram:plan` interviews you and creates `<Name> Overview` and `<Name> Plan`, epics (`Epics/<Name> E1 Title/<Name> E1 Title.md`) and tickets (`Epics/<Name> E1 Title/Tickets/<Name> T1 Title.md`). Each ticket is a note with a `status` (`backlog`, `todo`, `doing`, `review`, `done`, `blocked`) that links up to its epic, so the `up` chain still reaches `INDEX`. `engram:work` moves tickets along, ticks them off in the epic, and closes epics and projects when everything is done. A Dataview block in the project Overview gives a live board.
+
+The bookkeeping is scripted, so it is one call instead of several hand edits, and each call rebuilds the roadmap canvas:
+
+```bash
+engram.sh ticket "Engram T12" doing      # also: review, done, blocked; refuses if blocked_by are open (--force)
+engram.sh close-epic "Engram E3"         # refuses while tickets are open
+engram.sh close-project "Engram"         # moves the project to the done lists
+engram.sh search gate hook               # ranked, one line per hit with its description
+engram.sh lint                           # broken links, up chains, orphans, checklist drift
+```
+
+Every non-overview note carries a one-line `description:` property so search (and Claude) can judge a note without opening it.
 
 ## Getting started
 
