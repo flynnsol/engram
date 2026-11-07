@@ -2,6 +2,7 @@
 type: project-overview
 status: active
 tags: []
+description: 
 up: "[[Projects Overview]]"
 created: {{date}}
 updated: {{date}}

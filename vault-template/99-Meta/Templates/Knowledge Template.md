@@ -1,6 +1,7 @@
 ---
 type: knowledge
 tags: []
+description: 
 up: "[[Knowledge Overview]]"
 created: {{date}}
 updated: {{date}}

@@ -2,6 +2,7 @@
 type: project-plan
 status: active
 tags: []
+description: 
 up: "[[{{title}} Overview]]"
 created: {{date}}
 updated: {{date}}

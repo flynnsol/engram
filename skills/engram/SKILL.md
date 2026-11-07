@@ -14,7 +14,9 @@ The helper script is `${CLAUDE_PLUGIN_ROOT}/scripts/engram.sh`. Parse the argume
 | `vaultpath <path>` | Run `engram.sh set "<path>"`. Then, if it reports the vault has no `INDEX.md`, offer to run init. |
 | `vaultpath` (no path) | Run `engram.sh get` and report it. |
 | `init` | Run `engram.sh init`. It copies the scaffold without overwriting existing files, so it is safe on an existing vault. Report what it created. |
-| `status` or no args | Run `engram.sh status` and summarize: path, note count, inbox count. If no vault is set, explain `/engram vaultpath <path>`. |
+| `search <terms>` | Run `engram.sh search <terms>`; one line per hit (path, type, description). Open the best hit. |
+| `lint` | Run `engram.sh lint`. Fix every ERROR in the vault (broken links, missing `up`, checklist out of sync with a ticket); WARNINGs are orphans and notes missing from their parent overview. Never edit the lint tool's output away by deleting notes. |
+| `status` or no args | Run `engram.sh status` and summarize: path, note count, inbox count, lint counts. If no vault is set, explain `/engram vaultpath <path>`. |
 
 Notes:
 - Quote the path. `~` is expanded by the script.

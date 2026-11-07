@@ -2,6 +2,7 @@
 type: decision
 status: accepted
 tags: []
+description: 
 up: "[[Project Overview]]"
 created: {{date}}
 updated: {{date}}

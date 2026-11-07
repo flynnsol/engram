@@ -14,7 +14,9 @@ Memories, ideas, project plans and notes live in one folder you choose. Every se
 |---|---|
 | `/engram vaultpath <path>` | Set where the vault lives (stored in `~/.config/engram/vault`) |
 | `/engram init` | Scaffold the vault (never overwrites existing files) |
-| `/engram status` | Show the path, note count and inbox size |
+| `/engram status` | Show the path, note count, inbox size and lint counts |
+| `/engram search <terms>` | Ranked search over titles, tags, descriptions and bodies |
+| `/engram lint` | Check links, the `up` chain and ticket/epic consistency |
 | `engram:remember` | Save a memory, idea, plan, decision, knowledge note or journal entry |
 | `engram:recall` | Look things up by navigating overviews and links |
 | `engram:triage` | File your hand-made scratch notes into the right sections |

@@ -28,11 +28,14 @@ type: scratch | project-overview | project-plan | epic | ticket | decision | ide
 status: active | paused | done | archived   # projects, plans
 status: backlog | todo | doing | review | done | blocked   # epics, tickets
 tags: []
+description: one line saying what the note holds   # lets search and recall skip opening it
 up: "[[Parent Overview]]"
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
 ---
 ```
+
+Write a `description` on every non-overview note: one plain sentence, under 120 characters. `engram.sh search` and `engram:recall` show it instead of opening the note.
 
 Memory notes also carry `memory_type: user | feedback | project | reference`. Update `updated` on every edit.
 

@@ -2,6 +2,7 @@
 type: memory
 memory_type: user
 tags: []
+description: 
 up: "[[Memory Overview]]"
 created: {{date}}
 updated: {{date}}

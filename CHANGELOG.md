@@ -3,6 +3,12 @@
 All notable changes to the Engram plugin. Versions match `.claude-plugin/plugin.json`.
 Newest first; `tests/test_release.py` checks that the top entry matches the plugin version.
 
+## 0.3.0 - 2026-11-07
+
+- Added: `engram.sh search <terms>`, ranked by title, tags, description and body, one line per hit.
+- Added: `engram.sh lint` (broken links, missing or dead `up` chains, notes missing from their parent overview, orphans, bad ticket status, epic checklists out of sync with tickets). `/engram status` prints the lint counts.
+- Added: a `description:` property in the templates and conventions so search can show a note without opening it.
+
 ## 0.2.4 - 2026-11-07
 
 - Fixed: `/engram init` no longer fails on an existing vault (`cp -n` exits 1 when it skips files on newer coreutils); it now copies only what is missing.

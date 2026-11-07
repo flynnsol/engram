@@ -31,7 +31,7 @@ INDEX.md          root overview, links to every section overview
 
 ## Frontmatter
 
-`type` (including `epic` and `ticket`, whose `status` is backlog/todo/doing/review/done/blocked), `tags`, `up`, `created`, `updated`, plus `status` where it applies and `memory_type` on memory notes. Bump `updated` on every edit. Full schema in `99-Meta/Conventions.md`.
+`description` (one plain sentence on every non-overview note, so search can show it without opening the note), `type` (including `epic` and `ticket`, whose `status` is backlog/todo/doing/review/done/blocked), `tags`, `up`, `created`, `updated`, plus `status` where it applies and `memory_type` on memory notes. Bump `updated` on every edit. Full schema in `99-Meta/Conventions.md`.
 
 ## Editing rules
 

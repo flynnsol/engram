@@ -2,6 +2,7 @@
 type: idea
 status: seed
 tags: []
+description: 
 up: "[[Ideas Overview]]"
 created: {{date}}
 updated: {{date}}

@@ -2,6 +2,7 @@
 type: ticket
 status: backlog
 tags: []
+description: 
 up: "[[{{epic}}]]"
 epic: "[[{{epic}}]]"
 project: "[[{{project}} Overview]]"

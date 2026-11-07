@@ -72,9 +72,22 @@ cmd_status() {
   if [ -d "$v" ]; then
     echo "Notes: $(find "$v" -name '*.md' -not -path '*/.obsidian/*' | wc -l)"
     echo "Inbox: $(find "$v/00-Inbox" -name '*.md' ! -name 'Inbox Overview.md' 2>/dev/null | wc -l) unsorted"
+    [ -f "$v/INDEX.md" ] && { python3 -I "$PLUGIN_ROOT/scripts/vault.py" "$v" lint --summary || true; }
   else
     echo "Directory does not exist."
   fi
+}
+
+cmd_search() {
+  local v
+  v="$(require_vault)"
+  python3 -I "$PLUGIN_ROOT/scripts/vault.py" "$v" search "$@"
+}
+
+cmd_lint() {
+  local v
+  v="$(require_vault)"
+  python3 -I "$PLUGIN_ROOT/scripts/vault.py" "$v" lint "$@"
 }
 
 # Emits context for the SessionStart hook (stdout is added to the session).
@@ -137,5 +150,7 @@ case "${1:-}" in
   session-start) cmd_session_start ;;
   prompt-submit) cmd_prompt_submit ;;
   pretool-gate) cmd_pretool_gate ;;
-  *) echo "usage: engram.sh {set <path>|get|init|status|session-start|prompt-submit|pretool-gate}" >&2; exit 2 ;;
+  search) shift; cmd_search "$@" ;;
+  lint) shift; cmd_lint "$@" ;;
+  *) echo "usage: engram.sh {set <path>|get|init|status|session-start|prompt-submit|pretool-gate|search <terms>|lint [--summary]}" >&2; exit 2 ;;
 esac
