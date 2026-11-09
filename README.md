@@ -1,4 +1,4 @@
-<img alt="Engram" src="res/engram-lockup-card.png" width="360">
+<img alt="Engram" src="res/engram-banner.png" width="100%">
 
 A persistent memory vault for Claude Code, stored as an [Obsidian](https://obsidian.md) vault so a human and an AI can both read, search and edit it.
 
