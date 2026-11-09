@@ -21,7 +21,7 @@ Memories, ideas, project plans and notes live in one folder you choose. Every se
 | `engram:recall` | Look things up by navigating overviews and links |
 | `engram:triage` | File your hand-made scratch notes into the right sections |
 | `engram:plan` | Plan a project, epic or ticket through a short interview and create the notes |
-| `engram:work` | Show the board, pick up the next ticket, and close tickets, epics and projects (`engram.sh ticket`, `close-epic`, `close-project` do the bookkeeping) |
+| `engram:work` | Show the board, pick up the next ticket (or run several in parallel), and close tickets, epics and projects (`engram.sh ticket`, `ready`, `close-epic`, `close-project` do the bookkeeping) |
 | `engram:roadmap` | Draw a project's epics, tickets and dependencies as an Obsidian canvas |
 | `engram:principles` | Small tickets (under 200 lines, 5 files), small epics (2 weeks or less), short notes |
 | `engram:conventions` | The rules for writing and linking notes |
@@ -62,7 +62,13 @@ engram.sh close-epic "Engram E3"         # refuses while tickets are open
 engram.sh close-project "Engram"         # moves the project to the done lists
 engram.sh search gate hook               # ranked, one line per hit with its description
 engram.sh lint                           # broken links, up chains, orphans, checklist drift
+engram.sh ready "Engram" --waves          # tickets that can run in parallel, and the order
+engram.sh migrate [--apply]              # bring old tickets and templates up to date
 ```
+
+### Running tickets in parallel
+
+Tickets carry `touches` (the paths they change) and a `role` (`engineer`, `reviewer`, `tester`), and an *Acceptance* section of checks a command can confirm. `engram.sh ready "<Project>"` lists the tickets that can start now without colliding; `--waves` shows the order for an epic. `engram:work` then runs them as worktree subagents, picking an installed agent whose name matches the `role` (for example from a separate agents plugin) and falling back to `general-purpose`. Only the orchestrating session changes ticket status; a reviewer agent checks each diff before it is marked done. Lint warns about missing or overlapping `touches`. Vaults planned before 0.6.0: run `engram.sh migrate` (dry run) and `engram.sh migrate --apply`.
 
 Every non-overview note carries a one-line `description:` property so search (and Claude) can judge a note without opening it.
 

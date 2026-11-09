@@ -47,7 +47,7 @@ One or two questions at a time; use `AskUserQuestion` for choices. Restate in a 
 |---|---|
 | Project | Purpose and audience, "first usable version", in/out of scope, constraints, risks |
 | Epic | Goal, scope in/out, done-when, where in the code, constraints, risks, effort in working days, owner |
-| Ticket | What and why, parent epic, files touched, blockers |
+| Ticket | What and why, parent epic, files touched, blockers, role, how to check it is done |
 
 Vague answer: ask for a concrete example. "You decide": propose a default and get a yes.
 
@@ -55,6 +55,8 @@ Vague answer: ask for a concrete example. "You decide": propose a default and ge
 
 - **Project**: propose epics as thin shippable slices in build order, each 10 days or less, risky work early, with dependencies. Let the user pick (`AskUserQuestion`, `multiSelect`, groups of 4). Unchosen epics go in the Plan note under *Later*. Then break each chosen epic down: guided (full epic interview), automatic (draft it, state assumptions) or later (epic note only).
 - **Epic**: list tickets, each fitting one commit or PR (under 200 lines, 5 files); split any that do not. Order them, mark `blocked_by`, estimate in half-day steps, add them up with buffer for named unknowns. Over 10 days: do not create; propose a split and create the first epic only.
+
+- **Plan for parallel work**: give every ticket `touches` (the paths it changes) and a `role` (`engineer`, `reviewer`, `tester`; default `engineer`). Tickets that touch the same paths must be ordered with `blocked_by`, or merged. Put shared types, APIs and schemas in the first ticket so later tickets build against them. Write *Acceptance* as checks a test or command can confirm, since an agent cannot ask questions mid-ticket. For epics with 3 or more tickets, fill the epic's *Orchestration* section with the waves.
 
 Show a compact summary (epics with ticket titles and days) and get a yes.
 
@@ -72,5 +74,6 @@ Show a compact summary (epics with ticket titles and days) and get a yes.
 
 - Create nothing before the final yes; if the user stops midway, say what is left.
 - Link decisions and ideas to the plan with wikilinks instead of copying them.
+- Write `touches` as a list of repo paths or globs, `touches: ["scripts/work.py", "tests/"]`, and `role: engineer` unless the ticket is a review or test pass.
 - Write `blocked_by` as quoted wikilinks, `blocked_by: ["[[Name]]"]`, so the roadmap can draw the arrows.
 - Statuses: `backlog`, `todo`, `doing`, `review`, `done`, plus optional `blocked`.

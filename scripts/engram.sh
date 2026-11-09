@@ -62,6 +62,16 @@ cmd_init() {
     sed -i "s/{{init_date}}/$today/g" "$f"
   done
   echo "Vault initialized at: $v"
+  old_format_hint "$v"
+}
+
+# Say how many open tickets predate the touches/role fields.
+old_format_hint() {
+  local n
+  [ -f "$1/INDEX.md" ] || return 0
+  n="$(python3 -I "$PLUGIN_ROOT/scripts/vault.py" "$1" old-format 2>/dev/null || echo 0)"
+  [ "${n:-0}" -gt 0 ] && echo "Old format: $n open ticket(s) lack touches/role. Run: engram.sh migrate (dry run), then engram.sh migrate --apply."
+  return 0
 }
 
 cmd_status() {
@@ -72,7 +82,7 @@ cmd_status() {
   if [ -d "$v" ]; then
     echo "Notes: $(find "$v" -name '*.md' -not -path '*/.obsidian/*' | wc -l)"
     echo "Inbox: $(find "$v/00-Inbox" -name '*.md' ! -name 'Inbox Overview.md' 2>/dev/null | wc -l) unsorted"
-    [ -f "$v/INDEX.md" ] && { python3 -I "$PLUGIN_ROOT/scripts/vault.py" "$v" lint --summary || true; }
+    [ -f "$v/INDEX.md" ] && { python3 -I "$PLUGIN_ROOT/scripts/vault.py" "$v" lint --summary || true; old_format_hint "$v"; }
   else
     echo "Directory does not exist."
   fi
@@ -88,6 +98,12 @@ cmd_lint() {
   local v
   v="$(require_vault)"
   python3 -I "$PLUGIN_ROOT/scripts/vault.py" "$v" lint "$@"
+}
+
+cmd_ready() {
+  local v
+  v="$(require_vault)"
+  python3 -I "$PLUGIN_ROOT/scripts/vault.py" "$v" ready "$@"
 }
 
 cmd_work() {
@@ -194,6 +210,7 @@ case "${1:-}" in
   stop-check) cmd_stop_check ;;
   search) shift; cmd_search "$@" ;;
   lint) shift; cmd_lint "$@" ;;
-  ticket|close-epic|close-project) cmd_work "$@" ;;
-  *) echo "usage: engram.sh {set <path>|get|init|status|session-start|prompt-submit|pretool-gate|search <terms>|lint [--summary]|ticket <ticket> <status>|close-epic <epic>|close-project <name>}" >&2; exit 2 ;;
+  ready) shift; cmd_ready "$@" ;;
+  ticket|close-epic|close-project|migrate) cmd_work "$@" ;;
+  *) echo "usage: engram.sh {set <path>|get|init|status|session-start|prompt-submit|pretool-gate|search <terms>|lint [--summary]|ready <Project> [--epic E] [--waves]|migrate [--apply]|ticket <ticket> <status>|close-epic <epic>|close-project <name>}" >&2; exit 2 ;;
 esac

@@ -4,18 +4,23 @@
   vault.py <vault> search <term...> [--limit N]
   vault.py <vault> lint [--summary]
   vault.py <vault> digest [cwd]        tickets in flight, next ticket here, last journal
+  vault.py <vault> old-format          count of open tickets missing touches or role
   vault.py <vault> project-of <cwd>    name of the planned project that owns cwd
+  vault.py <vault> ready <Project> [--epic "<epic>"] [--waves]
+                                       tickets that can start now without colliding
 
 search ranks notes by title, tags, description and body matches and prints one line per hit.
 lint checks the link chain and ticket/epic consistency; exit status 1 when it finds errors.
 Read-only: it never writes to the vault.
 """
 
+import fnmatch
 import os
 import re
 import sys
 
 STATUSES = {"backlog", "todo", "doing", "review", "done", "blocked"}
+ROLES = {"engineer", "reviewer", "tester"}
 SKIP_DIRS = {".obsidian", ".git", ".trash"}
 LINK = re.compile(r"\[\[([^\]|#\n]+)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]")
 CODE = re.compile(r"```.*?```|`[^`\n]*`", re.S)
@@ -180,7 +185,126 @@ def lint(vault):
                     t["name"], "ticked" if m.group(1) == "x" else "unticked", t["fm"].get("status"))))
         if notes[erel]["fm"].get("status") == "done" and any(t["fm"].get("status") != "done" for t in ts):
             out.append(("error", erel, "epic is done but has open tickets"))
+    # orchestration fields: only open tickets, and only the ones about to be worked for `touches`
+    by_project = {}
+    for rel, n in notes.items():
+        fm = n["fm"]
+        if fm.get("type") != "ticket" or fm.get("status") == "done":
+            continue
+        role = fm.get("role")
+        if role and role not in ROLES:
+            out.append(("warn", rel, "unknown role '%s' (use %s)" % (role, ", ".join(sorted(ROLES)))))
+        if fm.get("status") in ("todo", "doing") and not touches_of(n):
+            out.append(("warn", rel, "no touches: it cannot run in parallel with other tickets"))
+        by_project.setdefault(fm.get("project", ""), []).append(n)
+    for ts in by_project.values():
+        for w, group in plan_waves(ts).items():
+            for i, a in enumerate(group):
+                for b in group[i + 1:]:
+                    if touches_of(a) and touches_of(b) and collision(a, b):
+                        rel = next(r for r, n in notes.items() if n is a)
+                        out.append(("warn", rel, "wave %d: touches overlap with [[%s]] (%s); order them with blocked_by" % (w, b["name"], collision(a, b))))
     return sorted(out, key=lambda o: (o[0] != "error", o[1], o[2]))
+
+
+def old_format_tickets(notes):
+    """Open tickets that lack the `touches` or `role` property (planned before orchestration fields)."""
+    return sorted(rel for rel, n in notes.items() if n["fm"].get("type") == "ticket"
+                  and n["fm"].get("status") != "done" and ("touches" not in n["fm"] or "role" not in n["fm"]))
+
+
+def paths_overlap(a, b):
+    """True if two `touches` entries (files, directories or globs) can name the same file."""
+    a, b = a.strip().lstrip("./").rstrip("/"), b.strip().lstrip("./").rstrip("/")
+    if not a or not b:
+        return True
+    if a == b or a.startswith(b + "/") or b.startswith(a + "/"):
+        return True
+    return fnmatch.fnmatch(a, b) or fnmatch.fnmatch(b, a)
+
+
+def touches_of(ticket):
+    t = ticket["fm"].get("touches")
+    return [x for x in t if x] if isinstance(t, list) else []
+
+
+def collision(a, b):
+    """First pair of overlapping touches between two tickets, or None. No touches collides with all."""
+    ta, tb = touches_of(a), touches_of(b)
+    if not ta or not tb:
+        return "(no touches)"
+    for x in ta:
+        for y in tb:
+            if paths_overlap(x, y):
+                return x if x == y else "%s ~ %s" % (x, y)
+    return None
+
+
+def blockers(ticket):
+    bb = ticket["fm"].get("blocked_by")
+    return [target(b.strip("[]")) for b in bb] if isinstance(bb, list) else []
+
+
+def plan_waves(tickets):
+    """Group open tickets into waves: wave 1 has no open blockers, wave n follows wave n-1."""
+    open_ = {t["name"]: t for t in tickets if t["fm"].get("status") != "done"}
+    wave = {}
+
+    def depth(name, seen=()):
+        if name in wave:
+            return wave[name]
+        if name in seen:
+            return 1
+        deps = [b for b in blockers(open_[name]) if b in open_]
+        wave[name] = 1 + max((depth(b, seen + (name,)) for b in deps), default=0)
+        return wave[name]
+
+    for name in open_:
+        depth(name)
+    out = {}
+    for name, w in wave.items():
+        out.setdefault(w, []).append(open_[name])
+    return {w: sorted(ts, key=ticket_order) for w, ts in sorted(out.items())}
+
+
+def ticket_order(t):
+    m = re.search(r" T(\d+) ", t["name"])
+    return (int(m.group(1)) if m else 9999, t["name"])
+
+
+def ready(vault, project, epic=None, waves=False):
+    """Print the tickets that can start now (unblocked, not colliding with each other or with work in flight)."""
+    notes = load(vault)
+    scope = [t for t in notes.values() if t["fm"].get("type") == "ticket"
+             and "[[%s Overview" % project in t["fm"].get("project", "")]
+    if epic:
+        scope = [t for t in scope if any(target(l) == epic or target(l).startswith(epic + " ") for l in links(t["fm"].get("epic", "")))]
+    if not scope:
+        print("no tickets found for %s%s" % (project, " in " + epic if epic else ""), file=sys.stderr)
+        return 1
+    done = {t["name"] for t in scope if t["fm"].get("status") == "done"}
+    all_done = {n["name"] for n in notes.values() if n["fm"].get("status") == "done"}
+    flight = [t for t in scope if t["fm"].get("status") in ("doing", "review")]
+    cands = sorted((t for t in scope if t["fm"].get("status") in ("todo", "backlog")
+                    and all(b in all_done for b in blockers(t))), key=lambda t: (t["fm"].get("status") != "todo", ticket_order(t)))
+    batch, held = [], []
+    for t in cands:
+        clash = next(((o, collision(t, o)) for o in flight + batch if collision(t, o)), None)
+        if clash:
+            held.append((t, clash))
+        else:
+            batch.append(t)
+    if waves:
+        for w, ts in plan_waves(scope).items():
+            print("wave %d: %s" % (w, "; ".join("%s [%s]" % (t["name"], t["fm"].get("status")) for t in ts)))
+        return 0
+    print("In flight: %s" % (", ".join(t["name"] for t in flight) or "none"))
+    print("Ready now (%d, safe to run in parallel):" % len(batch))
+    for t in batch:
+        print("- %s | role=%s | touches=%s" % (t["name"], t["fm"].get("role") or "engineer", ", ".join(touches_of(t)) or "none"))
+    for t, (o, why) in held:
+        print("Held: %s collides with %s on %s" % (t["name"], o["name"], why))
+    return 0 if batch else 1
 
 
 def project_for_cwd(vault, cwd):
@@ -257,6 +381,21 @@ def main(argv):
                 print("%s %s: %s" % (level.upper(), rel, msg))
             print("%d error(s), %d warning(s)" % (errors, warns))
         return 1 if errors else 0
+    if cmd == "ready":
+        epic = None
+        if "--epic" in rest:
+            i = rest.index("--epic")
+            epic = rest[i + 1]
+            rest = rest[:i] + rest[i + 2:]
+        w = "--waves" in rest
+        rest = [r for r in rest if r != "--waves"]
+        if len(rest) != 1:
+            print('usage: ready <Project> [--epic "<epic>"] [--waves]', file=sys.stderr)
+            return 2
+        return ready(vault, rest[0], epic, w)
+    if cmd == "old-format":
+        print(len(old_format_tickets(load(vault))))
+        return 0
     if cmd == "project-of":
         print(project_for_cwd(vault, rest[0] if rest else os.getcwd()))
         return 0

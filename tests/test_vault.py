@@ -62,3 +62,34 @@ class VaultToolsTest(VaultCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class OrchestrationLintTest(VaultCase):
+    E = "01-Projects/P/Epics/P E1 A"
+
+    def setUp(self):
+        super().setUp()
+        self.init_vault()
+        self.write("01-Projects/P/P Overview.md", n("project-overview", "Projects Overview", "- [[P E1 A]]", status="active"))
+        self.write(f"{self.E}/P E1 A.md", n("epic", "P Overview", "- [ ] [[P T1 X]]\n- [ ] [[P T2 X]]\n- [ ] [[P T3 X]]",
+                                           extra='project: "[[P Overview]]"\n', status="doing"))
+
+    def tk(self, num, status, extra=""):
+        ex = 'epic: "[[P E1 A]]"\nproject: "[[P Overview]]"\n' + extra
+        self.write(f"{self.E}/Tickets/P T{num} X.md", n("ticket", "P E1 A", extra=ex, status=status))
+
+    def test_warnings(self):
+        self.tk(1, "todo")                                            # no touches, about to be worked
+        self.tk(2, "backlog")                                         # no touches, but only backlog: quiet
+        self.tk(3, "backlog", 'role: wizard\ntouches: ["a"]\n')
+        out = self.sh("lint").stdout
+        self.assertIn("P T1 X.md: no touches", out)
+        self.assertNotIn("P T2 X.md: no touches", out)
+        self.assertIn("unknown role 'wizard'", out)
+
+    def test_same_wave_overlap_warns_but_blocked_pair_does_not(self):
+        self.tk(1, "todo", 'touches: ["src/a.py"]\n')
+        self.tk(2, "todo", 'touches: ["src"]\n')
+        self.assertIn("wave 1: touches overlap with [[P T2 X]]", self.sh("lint").stdout)
+        self.tk(2, "todo", 'touches: ["src"]\nblocked_by: ["[[P T1 X]]"]\n')
+        self.assertNotIn("touches overlap", self.sh("lint").stdout)

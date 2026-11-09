@@ -14,6 +14,7 @@ Statuses: `backlog` → `todo` → `doing` → `review` → `done`, optional `bl
 `${CLAUDE_PLUGIN_ROOT}/scripts/engram.sh` does the mechanical bookkeeping and rebuilds the roadmap canvas each time:
 
 - `ticket "<Project> T12" <status> [--force]`: sets the status, bumps `updated`, ticks or unticks the epic's checklist line, starts the epic (`doing`) with its first active ticket, and refuses to start a ticket whose `blocked_by` are not done. Prints `n of m tickets done`.
+- `ready "<Project>" [--epic "<epic>"] [--waves]`: read-only. Lists the tickets that can start now (not blocked, `touches` disjoint from each other and from work in flight) with their `role`, and why any other is held. `--waves` prints the epic's waves. A ticket with no `touches` is treated as colliding with everything.
 - `close-epic "<Project> E3"`: refuses while tickets are open; sets the epic `done`, marks it in the project Overview, and says how many *Done when* items are still unticked.
 - `close-project "<Project>"`: refuses while epics are open; sets the Overview `done` and moves it to the done lists in `[[Projects Overview]]` and `[[INDEX]]`.
 
@@ -32,6 +33,17 @@ Find tickets with Grep on `type: ticket` and `status:` under `01-Projects/<Name>
 TABLE status, epic, estimate_days FROM "01-Projects/<Name>" WHERE type = "ticket" AND status != "done" SORT status ASC
 ```
 ````
+
+## Run tickets in parallel
+
+Use this when `engram.sh ready` returns two or more tickets. For one ticket, use *Start a ticket*.
+
+1. Run `engram.sh ready "<Project>"`. Confirm the batch with the user the first time.
+2. For each ticket, run `engram.sh ticket "<ticket>" doing`, then spawn one subagent in its own git worktree (`isolation: "worktree"`), in a single message so they run together.
+3. Choose the agent by the ticket's `role`: an installed agent whose name matches (`engineer`, `reviewer`, `tester`, for example from a separate agents plugin), else `general-purpose`. Brief it with the ticket text, its *Acceptance* checks, its `touches`, and the rule: stay inside `touches`, make one commit, do not touch the vault.
+4. **Only you (the orchestrator) change ticket status or write to the vault.** Subagents report back; you run `engram.sh ticket`.
+5. When a subagent finishes, run `engram.sh ticket "<ticket>" review` and send the diff to a `reviewer` agent (else `general-purpose`) to check it against *Acceptance*. Pass: merge, then `done`. Fail: back to `doing` with the findings, one retry, then ask the user.
+6. Merge the worktree branches one at a time, run the tests after each, then run `engram.sh ready` again for the next wave.
 
 ## Start a ticket
 

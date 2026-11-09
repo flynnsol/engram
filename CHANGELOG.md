@@ -3,6 +3,14 @@
 All notable changes to the Engram plugin. Versions match `.claude-plugin/plugin.json`.
 Newest first; `tests/test_release.py` checks that the top entry matches the plugin version.
 
+## 0.6.0 - 2026-11-09
+
+- Added: orchestration-ready planning. Tickets carry `touches` (paths changed) and `role` (`engineer`, `reviewer`, `tester`) and an *Acceptance* section; epics get an *Orchestration* section for interfaces and waves. `engram:plan` asks for them.
+- Added: `engram.sh ready <Project> [--epic E] [--waves]` lists the tickets that can start now (unblocked, `touches` disjoint from each other and from work in flight) and prints waves.
+- Added: `engram:work` "Run tickets in parallel": one worktree subagent per ready ticket, agent chosen by `role` with a `general-purpose` fallback, only the orchestrator writes status, a reviewer gates `review` to `done`. `engram:principles` gains a plan-for-parallel rule.
+- Added: lint warns on unknown `role`, on `todo`/`doing` tickets with no `touches`, and on overlapping `touches` within a wave.
+- Added: `engram.sh migrate [--apply]` adds `touches` and `role` to open tickets and refreshes vault templates (old copies kept as `.bak`). `init` and `status` report tickets still in the old format; `engram:triage` offers the migration.
+
 ## 0.5.0 - 2026-11-07
 
 - Added: SessionStart digest ("Where things stand"): tickets in flight, the next unblocked ticket when the session starts inside a planned project, and the last journal entry.

@@ -65,3 +65,93 @@ class WorkTest(VaultCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ReadyTest(VaultCase):
+    def setUp(self):
+        super().setUp()
+        self.init_vault()
+        self.write("01-Projects/P/P Overview.md", n("project-overview", "Projects Overview", "- [[P E1 A]]", status="active"))
+        self.write(f"{E}/P E1 A.md", n("epic", "P Overview", "- [ ] [[P T1 A]]\n- [ ] [[P T2 B]]\n- [ ] [[P T3 C]]\n- [ ] [[P T4 D]]",
+                                    extra='project: "[[P Overview]]"\n', status="doing"))
+
+    def ticket(self, num, status="todo", touches=None, blocked=None):
+        ex = 'epic: "[[P E1 A]]"\nproject: "[[P Overview]]"\n'
+        if touches is not None:
+            ex += "touches: [%s]\n" % ", ".join('"%s"' % t for t in touches)
+        if blocked:
+            ex += 'blocked_by: ["[[%s]]"]\n' % blocked
+        name = "P T%d X" % num
+        self.write(f"{E}/Tickets/{name}.md", n("ticket", "P E1 A", extra=ex, status=status))
+        return name
+
+    def test_disjoint_tickets_run_together_and_collisions_are_held(self):
+        self.ticket(1, touches=["src/a.py"])
+        self.ticket(2, touches=["src/b.py", "tests/"])
+        self.ticket(3, touches=["src"])            # overlaps T1 and T2 by directory
+        self.ticket(4, touches=["docs/x.md"], blocked="P T1 X")  # blocked: not ready
+        r = self.sh("ready", "P")
+        self.assertIn("Ready now (2", r.stdout)
+        self.assertIn("- P T1 X | role=engineer | touches=src/a.py", r.stdout)
+        self.assertIn("Held: P T3 X collides with P T1 X on src ~ src/a.py", r.stdout)
+        self.assertNotIn("- P T4 X", r.stdout)
+
+    def test_missing_touches_runs_alone_and_in_flight_reserves_paths(self):
+        self.ticket(1, status="doing", touches=["src/a.py"])
+        self.ticket(2, touches=["src/a.py"])
+        self.ticket(3)  # no touches
+        r = self.sh("ready", "P")
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("Held: P T2 X collides with P T1 X on src/a.py", r.stdout)
+        self.assertIn("(no touches)", r.stdout)
+
+    def test_waves_and_unknown_project(self):
+        self.ticket(1, touches=["a"])
+        self.ticket(2, touches=["b"], blocked="P T1 X")
+        r = self.sh("ready", "P", "--waves")
+        self.assertIn("wave 1: P T1 X", r.stdout)
+        self.assertIn("wave 2: P T2 X", r.stdout)
+        self.assertEqual(self.sh("ready", "Nope").returncode, 1)
+
+
+class MigrateTest(VaultCase):
+    def setUp(self):
+        super().setUp()
+        self.init_vault()
+        self.write("01-Projects/P/P Overview.md", n("project-overview", "Projects Overview", "- [[P E1 A]]", status="active"))
+        self.write(f"{E}/P E1 A.md", n("epic", "P Overview", "- [ ] [[P T1 Old]]\n- [x] [[P T2 Done]]\n- [ ] [[P T3 New]]",
+                                    extra='project: "[[P Overview]]"\n', status="doing"))
+        ex = 'epic: "[[P E1 A]]"\nproject: "[[P Overview]]"\n'
+        self.write(f"{E}/Tickets/P T1 Old.md", n("ticket", "P E1 A", extra=ex, status="todo"))
+        self.write(f"{E}/Tickets/P T2 Done.md", n("ticket", "P E1 A", extra=ex, status="done"))
+        self.write(f"{E}/Tickets/P T3 New.md", n("ticket", "P E1 A", extra=ex + "touches: []\nrole: tester\n", status="todo"))
+        self.tpl = os.path.join(self.vault, "99-Meta/Templates/Ticket Template.md")
+        with open(self.tpl, "w") as fh:
+            fh.write("old template\n")
+
+    def read(self, rel):
+        with open(os.path.join(self.vault, rel), encoding="utf-8") as fh:
+            return fh.read()
+
+    def test_dry_run_writes_nothing_and_status_reports(self):
+        before = self.read(f"{E}/Tickets/P T1 Old.md")
+        r = self.sh("migrate")
+        self.assertIn("Would update ticket: " + f"{E}/Tickets/P T1 Old.md", r.stdout)
+        self.assertNotIn("T2 Done", r.stdout)
+        self.assertNotIn("T3 New", r.stdout)
+        self.assertIn("Would update template: Ticket Template.md", r.stdout)
+        self.assertEqual(self.read(f"{E}/Tickets/P T1 Old.md"), before)
+        self.assertIn("Old format: 1 open ticket", self.sh("status").stdout)
+
+    def test_apply_is_idempotent_and_keeps_backup(self):
+        r = self.sh("migrate", "--apply")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        t = self.read(f"{E}/Tickets/P T1 Old.md")
+        self.assertIn("touches: []", t)
+        self.assertIn("role: engineer", t)
+        self.assertEqual(self.read(f"{E}/Tickets/P T3 New.md").count("role:"), 1)  # kept as is
+        self.assertIn("touches:", self.read("99-Meta/Templates/Ticket Template.md"))
+        self.assertEqual(self.read("99-Meta/Templates/Ticket Template.md.bak"), "old template\n")
+        self.assertIn("Nothing to migrate", self.sh("migrate").stdout)
+        self.assertNotIn("Old format", self.sh("status").stdout)
+        self.assertEqual(self.sh("migrate", "--bogus").returncode, 2)

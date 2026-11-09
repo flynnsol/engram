@@ -4,11 +4,14 @@
   work.py <vault> ticket "<ticket>" <status> [--force]
   work.py <vault> close-epic "<epic>"
   work.py <vault> close-project "<Project>"
+  work.py <vault> migrate [--apply]
 
 <ticket> / <epic> is a full note name or a unique prefix such as "Engram T12" / "Engram E3".
 `ticket` sets the status, bumps `updated`, ticks or unticks the epic's checklist line, moves a
 not-yet-started epic to `doing`, and refuses to start a ticket whose blockers are not done
-(--force overrides). Every command rebuilds the project's roadmap canvas afterwards.
+(--force overrides). `migrate` lists open tickets missing `touches`/`role` and vault templates that
+differ from the plugin's; with --apply it adds the fields (`touches: []`, `role: engineer`) and
+replaces changed templates, keeping a .bak copy. Every command rebuilds the project's roadmap canvas afterwards.
 """
 
 import datetime
@@ -21,6 +24,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import vault as V  # noqa: E402
 
 HERE = os.path.dirname(os.path.abspath(__file__))
+TEMPLATES = os.path.join(os.path.dirname(HERE), "vault-template", "99-Meta", "Templates")
 TODAY = datetime.date.today().isoformat()
 
 
@@ -190,8 +194,51 @@ def cmd_close_project(vault, name):
     roadmap(vault, name)
 
 
+def cmd_migrate(vault, apply):
+    notes = V.load(vault)
+    old = V.old_format_tickets(notes)
+    tdir = os.path.join(vault, "99-Meta", "Templates")
+    stale = []
+    for f in sorted(os.listdir(TEMPLATES)) if os.path.isdir(TEMPLATES) else []:
+        src, dst = os.path.join(TEMPLATES, f), os.path.join(tdir, f)
+        with open(src, "rb") as fh:
+            new = fh.read()
+        cur = None
+        if os.path.exists(dst):
+            with open(dst, "rb") as fh:
+                cur = fh.read()
+        if cur != new:
+            stale.append((f, src, dst, cur is not None))
+    verb = "Updated" if apply else "Would update"
+    for rel in old:
+        fm = notes[rel]["fm"]
+        if apply:
+            keys = {}
+            if "touches" not in fm:
+                keys["touches"] = "[]"
+            if "role" not in fm:
+                keys["role"] = "engineer"
+            edit(vault, rel, **keys)
+        print("%s ticket: %s" % (verb, rel))
+    for f, src, dst, exists in stale:
+        if apply:
+            os.makedirs(tdir, exist_ok=True)
+            if exists:
+                with open(dst, "rb") as a, open(dst + ".bak", "wb") as b:
+                    b.write(a.read())
+            with open(src, "rb") as a, open(dst, "wb") as b:
+                b.write(a.read())
+        print("%s template: %s%s" % (verb, f, " (old copy kept as .bak)" if apply and exists else ""))
+    if not old and not stale:
+        print("Nothing to migrate.")
+    elif not apply:
+        print("%d ticket(s) and %d template(s) would change. Run with --apply to write." % (len(old), len(stale)))
+    else:
+        print("Migrated %d ticket(s) and %d template(s)." % (len(old), len(stale)))
+
+
 def main(argv):
-    if len(argv) < 4:
+    if len(argv) < 3:
         print(__doc__, file=sys.stderr)
         return 2
     vault, cmd, args = argv[1], argv[2], argv[3:]
@@ -200,6 +247,8 @@ def main(argv):
     try:
         if cmd == "ticket" and len(args) == 2:
             cmd_ticket(vault, args[0], args[1], force)
+        elif cmd == "migrate" and len(args) <= 1 and args in ([], ["--apply"]):
+            cmd_migrate(vault, bool(args))
         elif cmd == "close-epic" and len(args) == 1:
             cmd_close_epic(vault, args[0])
         elif cmd == "close-project" and len(args) == 1:

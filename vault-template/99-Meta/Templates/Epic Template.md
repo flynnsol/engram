@@ -33,6 +33,13 @@ One sentence: what changes for whom.
 <!-- engram:tickets -->
 - [ ] [[{{project}} T1 Short title]] — one line
 
+## Orchestration
+
+Optional, for epics run by several agents.
+
+- Interfaces first: the ticket that defines each shared type, API or schema.
+- Waves: wave 1 = tickets that can run in parallel; wave 2 needs wave 1. Tickets in one wave must not share `touches`.
+
 ## Details
 
 Links to design notes. Optional.

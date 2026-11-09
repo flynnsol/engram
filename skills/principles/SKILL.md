@@ -16,7 +16,13 @@ description: Core Engram planning rules - small tickets (one commit or PR, under
 - An epic is **2 weeks or less for one engineer** (about 10 working days), including review.
 - Bigger ideas become several epics, each a thin, shippable slice.
 
-## 3. Short notes
+## 3. Plan for parallel work
+
+- Give every ticket `touches` (paths it changes) and a `role`. Tickets in the same wave must not share paths; order them with `blocked_by` or merge them.
+- Define shared types, APIs and schemas in the first ticket.
+- Write acceptance as checks a test or command can confirm, so an agent can finish without asking.
+
+## 4. Short notes
 
 - Lead with the point. The first lines say what this is and what to do.
 - Cut background and hedging. Prefer lists and tables to paragraphs.

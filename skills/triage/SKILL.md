@@ -14,4 +14,5 @@ Follow `engram:conventions`.
 5. **Leave anything ambiguous** in the inbox and ask about it at the end.
 6. **Never delete** original content. If a note is pure noise, ask first.
 7. **Tidy project folders**: in each `01-Projects/<Name>/`, find notes with `type: epic` or `type: ticket` that sit loose in the project root or in the wrong place. Move each epic into `Epics/<epic name>/<epic name>.md` (a folder per epic) and each ticket into `Epics/<its epic>/Tickets/` (the epic named in its `epic` property), creating those folders if needed. Moving by name keeps wikilinks working; if `<Name> Roadmap.canvas` exists, regenerate it with `engram:roadmap` since canvas cards use file paths. Include this in the plan shown in step 3.
-8. Refresh `[[INDEX]]` "Recently updated" and report: what moved where, using `[[links]]`.
+8. **Old ticket format**: run `${CLAUDE_PLUGIN_ROOT}/scripts/engram.sh migrate`. If it lists open tickets without `touches`/`role` or out-of-date templates, show the list and, on a yes, run `engram.sh migrate --apply` (templates keep a `.bak`). Afterwards, tell the user that `touches` are empty and are filled in when a ticket is next planned or picked up.
+9. Refresh `[[INDEX]]` "Recently updated" and report: what moved where, using `[[links]]`.
