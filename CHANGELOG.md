@@ -3,6 +3,14 @@
 All notable changes to the Engram plugin. Versions match `.claude-plugin/plugin.json`.
 Newest first; `tests/test_release.py` checks that the top entry matches the plugin version.
 
+## 0.7.0 - 2026-11-10
+
+- Added: `archived` ticket status (`engram.sh ticket <t> archived`). Archived tickets are skipped by `ready`, the session digest, lint's open-ticket checks and `close-epic`, need no checked box, count as resolved blockers, and are grey on the roadmap.
+- Added: ticket names are `<PREFIX>-<n> Title` (for example `ENG-22 Add archived status`). Each project Overview carries a unique 3-letter `prefix` (`engram.sh prefix <Project>` suggests one); tickets carry `kind: feature | bug | chore`. Lint errors on duplicate prefixes and invalid kinds, and warns on missing ones.
+- Changed: `ticket`, `ready`, the digest and the roadmap accept both `ENG-22` and old `Engram T22` names and order them together by number. `engram:plan` names new tickets with the prefix and sets `kind`.
+- Added: `engram.sh migrate` also gives projects a prefix, renames `<Project> T<n>` tickets, rewrites wikilinks, `blocked_by` and canvas paths, and sets `kind` from the title. `--apply` copies the whole vault to a sibling `<vault>.backup-<time>` folder first; running it again changes nothing.
+- Note: Atrium's tickets board still parses `<Project> T<n>` names and needs a matching update to read prefixed ones.
+
 ## 0.6.0 - 2026-11-09
 
 - Added: orchestration-ready planning. Tickets carry `touches` (paths changed) and `role` (`engineer`, `reviewer`, `tester`) and an *Acceptance* section; epics get an *Orchestration* section for interfaces and waves. `engram:plan` asks for them.

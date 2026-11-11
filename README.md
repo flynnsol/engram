@@ -68,7 +68,7 @@ engram.sh migrate [--apply]              # bring old tickets and templates up to
 
 ### Running tickets in parallel
 
-Tickets carry `touches` (the paths they change) and a `role` (`engineer`, `reviewer`, `tester`), and an *Acceptance* section of checks a command can confirm. `engram.sh ready "<Project>"` lists the tickets that can start now without colliding; `--waves` shows the order for an epic. `engram:work` then runs them as worktree subagents, picking an installed agent whose name matches the `role` (for example from a separate agents plugin) and falling back to `general-purpose`. Only the orchestrating session changes ticket status; a reviewer agent checks each diff before it is marked done. Lint warns about missing or overlapping `touches`. Vaults planned before 0.6.0: run `engram.sh migrate` (dry run) and `engram.sh migrate --apply`.
+Tickets carry `touches` (the paths they change) and a `role` (`engineer`, `reviewer`, `tester`), and an *Acceptance* section of checks a command can confirm. `engram.sh ready "<Project>"` lists the tickets that can start now without colliding; `--waves` shows the order for an epic. `engram:work` then runs them as worktree subagents, picking an installed agent whose name matches the `role` (for example from a separate agents plugin) and falling back to `general-purpose`. Only the orchestrating session changes ticket status; a reviewer agent checks each diff before it is marked done. Lint warns about missing or overlapping `touches`. Vaults planned before 0.7.0 (prefixed ticket names, `kind`) or 0.6.0: run `engram.sh migrate` (dry run) and `engram.sh migrate --apply`.
 
 Every non-overview note carries a one-line `description:` property so search (and Claude) can judge a note without opening it.
 
