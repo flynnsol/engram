@@ -100,6 +100,12 @@ cmd_lint() {
   python3 -I "$PLUGIN_ROOT/scripts/vault.py" "$v" lint "$@"
 }
 
+cmd_prefix() {
+  local v
+  v="$(require_vault)"
+  python3 -I "$PLUGIN_ROOT/scripts/vault.py" "$v" prefix "$@"
+}
+
 cmd_ready() {
   local v
   v="$(require_vault)"
@@ -211,6 +217,7 @@ case "${1:-}" in
   search) shift; cmd_search "$@" ;;
   lint) shift; cmd_lint "$@" ;;
   ready) shift; cmd_ready "$@" ;;
+  prefix) shift; cmd_prefix "$@" ;;
   ticket|close-epic|close-project|migrate) cmd_work "$@" ;;
-  *) echo "usage: engram.sh {set <path>|get|init|status|session-start|prompt-submit|pretool-gate|search <terms>|lint [--summary]|ready <Project> [--epic E] [--waves]|migrate [--apply]|ticket <ticket> <status>|close-epic <epic>|close-project <name>}" >&2; exit 2 ;;
+  *) echo "usage: engram.sh {set <path>|get|init|status|session-start|prompt-submit|pretool-gate|search <terms>|lint [--summary]|ready <Project> [--epic E] [--waves]|prefix <Project>|migrate [--apply]|ticket <ticket> <status>|close-epic <epic>|close-project <name>}" >&2; exit 2 ;;
 esac

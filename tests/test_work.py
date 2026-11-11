@@ -62,6 +62,25 @@ class WorkTest(VaultCase):
         self.assertIn("[[Q Overview", self.read("INDEX.md"))
         self.assertIn("status: done", self.read("01-Projects/P/P Overview.md"))
 
+    def test_prefixed_and_old_names_resolve_and_order(self):
+        ex = 'epic: "[[P E1 A]]"\nproject: "[[P Overview]]"\n'
+        self.write(f"{E}/Tickets/PPP-3 Three.md", n("ticket", "P E1 A", extra=ex, status="backlog"))
+        self.write(f"{E}/Tickets/PPP-10 Ten.md", n("ticket", "P E1 A", extra=ex, status="backlog"))
+        for q in ("PPP-3", "PPP-3 Three"):
+            self.assertEqual(self.sh("ticket", q, "doing").returncode, 0)
+        r = self.sh("ticket", "PPP-1", "doing")  # PPP-1 must not match PPP-10
+        self.assertEqual(r.returncode, 1)
+        self.assertEqual(self.sh("ticket", "P T1", "doing").returncode, 0)  # old name still works
+        canvas = json.loads(self.read("01-Projects/P/P Roadmap.canvas"))
+        files = [n["file"].split("/")[-1] for n in canvas["nodes"] if n.get("file", "").endswith(".md") and "/Tickets/" in n["file"]]
+        self.assertEqual(files, ["P T1 One.md", "P T2 Two.md", "PPP-3 Three.md", "PPP-10 Ten.md"])
+
+    def test_prefix_command(self):
+        self.write("01-Projects/Engram/Engram Overview.md", n("project-overview", "Projects Overview", extra="prefix: ENG\n"))
+        self.assertEqual(self.sh("prefix", "Engram").stdout.strip(), "ENG")  # existing one is kept
+        self.assertEqual(self.sh("prefix", "Engine Room").stdout.strip(), "EN2")  # ENG taken, only 2 initials: numbered
+        self.assertEqual(self.sh("prefix", "Zeta").stdout.strip(), "ZET")
+
     def test_archived_ticket(self):
         r = self.sh("ticket", "P T1", "archived")
         self.assertEqual(r.returncode, 0, r.stderr)

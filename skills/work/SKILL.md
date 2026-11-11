@@ -13,7 +13,7 @@ Statuses: `backlog` → `todo` → `doing` → `review` → `done`, optional `bl
 
 `${CLAUDE_PLUGIN_ROOT}/scripts/engram.sh` does the mechanical bookkeeping and rebuilds the roadmap canvas each time:
 
-- `ticket "<Project> T12" <status> [--force]`: sets the status, bumps `updated`, ticks or unticks the epic's checklist line, starts the epic (`doing`) with its first active ticket, and refuses to start a ticket whose `blocked_by` are not done. Prints `n of m tickets done`.
+- `ticket "ENG-12" <status> [--force]` (also `"Engram T12"` for older names): sets the status, bumps `updated`, ticks or unticks the epic's checklist line, starts the epic (`doing`) with its first active ticket, and refuses to start a ticket whose `blocked_by` are not done. Prints `n of m tickets done`.
 - `ready "<Project>" [--epic "<epic>"] [--waves]`: read-only. Lists the tickets that can start now (not blocked, `touches` disjoint from each other and from work in flight) with their `role`, and why any other is held. `--waves` prints the epic's waves. A ticket with no `touches` is treated as colliding with everything.
 - `close-epic "<Project> E3"`: refuses while tickets are open; sets the epic `done`, marks it in the project Overview, and says how many *Done when* items are still unticked.
 - `close-project "<Project>"`: refuses while epics are open; sets the Overview `done` and moves it to the done lists in `[[Projects Overview]]` and `[[INDEX]]`.
@@ -26,7 +26,7 @@ Work only starts on planned work. If the user asks to build something that has n
 
 ## Board / what's next
 
-Find tickets with Grep on `type: ticket` and `status:` under `01-Projects/<Name>/`. Report briefly, grouped by status: `doing` and `blocked` first, then the next `todo` (or `backlog`) ticket whose `blocked_by` are all `done`. The project Overview may carry a live board:
+Find tickets with Grep on `type: ticket` and `status:` under `01-Projects/<Name>/`. Report briefly, grouped by status, with each ticket's `kind`: `doing` and `blocked` first, then the next `todo` (or `backlog`) ticket whose `blocked_by` are all `done`. The project Overview may carry a live board:
 
 ````
 ```dataview

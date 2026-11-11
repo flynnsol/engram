@@ -6,6 +6,7 @@
   vault.py <vault> digest [cwd]        tickets in flight, next ticket here, last journal
   vault.py <vault> old-format          count of open tickets missing touches or role
   vault.py <vault> project-of <cwd>    name of the planned project that owns cwd
+  vault.py <vault> prefix <Project>    the project's ticket prefix, or a free one to use
   vault.py <vault> ready <Project> [--epic "<epic>"] [--waves]
                                        tickets that can start now without colliding
 
@@ -305,9 +306,14 @@ def plan_waves(tickets):
     return {w: sorted(ts, key=ticket_order) for w, ts in sorted(out.items())}
 
 
+def ticket_number(name):
+    """Project-wide ticket number from `Project T12 Title` or `ENG-12 Title`, else 9999."""
+    m = re.search(r" T(\d+) ", name) or re.match(r"[A-Z][A-Z0-9]+-(\d+) ", name)
+    return int(m.group(1)) if m else 9999
+
+
 def ticket_order(t):
-    m = re.search(r" T(\d+) ", t["name"])
-    return (int(m.group(1)) if m else 9999, t["name"])
+    return (ticket_number(t["name"]), t["name"])
 
 
 def ready(vault, project, epic=None, waves=False):
@@ -379,8 +385,7 @@ def digest(vault, cwd=""):
             return all(target(b.strip("[]")) in done for b in bb) if isinstance(bb, list) else True
 
         def num(t):
-            m = re.search(r" T(\d+) ", t["name"])
-            return int(m.group(1)) if m else 9999
+            return ticket_number(t["name"])
 
         todo = [t for t in tickets if "[[%s Overview" % here in t["fm"].get("project", "")
                 and t["fm"].get("status") in ("todo", "backlog") and blockers_done(t)]
@@ -431,6 +436,16 @@ def main(argv):
             print('usage: ready <Project> [--epic "<epic>"] [--waves]', file=sys.stderr)
             return 2
         return ready(vault, rest[0], epic, w)
+    if cmd == "prefix":
+        if len(rest) != 1:
+            print("usage: prefix <Project>", file=sys.stderr)
+            return 2
+        notes = load(vault)
+        own = next((n["fm"].get("prefix") for n in notes.values()
+                    if n["fm"].get("type") == "project-overview" and n["name"] == rest[0] + " Overview"), None)
+        taken = [str(n["fm"].get("prefix", "")) for n in notes.values() if n["fm"].get("type") == "project-overview"]
+        print(own or prefix_for(rest[0], taken))
+        return 0
     if cmd == "old-format":
         print(len(old_format_tickets(load(vault))))
         return 0
