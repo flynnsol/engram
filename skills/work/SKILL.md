@@ -7,7 +7,7 @@ description: Execute planned work (planned means a project folder exists under 0
 
 Tickets and epics are vault notes (see `engram:plan`). Status lives in each note's `status` frontmatter; moving work means editing it and keeping the lists in sync. Follow `engram:conventions` and `engram:principles`.
 
-Statuses: `backlog` → `todo` → `doing` → `review` → `done`, optional `blocked`.
+Statuses: `backlog` → `todo` → `doing` → `review` → `done`, optional `blocked`, and `archived` for retired tickets (skipped by `ready`, the digest and lint; no checked box needed).
 
 ## Commands (use these, not hand edits)
 

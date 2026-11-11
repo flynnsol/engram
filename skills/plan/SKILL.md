@@ -76,4 +76,4 @@ Show a compact summary (epics with ticket titles and days) and get a yes.
 - Link decisions and ideas to the plan with wikilinks instead of copying them.
 - Write `touches` as a list of repo paths or globs, `touches: ["scripts/work.py", "tests/"]`, and `role: engineer` unless the ticket is a review or test pass.
 - Write `blocked_by` as quoted wikilinks, `blocked_by: ["[[Name]]"]`, so the roadmap can draw the arrows.
-- Statuses: `backlog`, `todo`, `doing`, `review`, `done`, plus optional `blocked`.
+- Statuses: `backlog`, `todo`, `doing`, `review`, `done`, plus optional `blocked` and `archived`.

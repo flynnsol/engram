@@ -52,12 +52,12 @@ Each section has `<Section> Overview.md` with `Up: [[INDEX]]`, and every note ca
 
 ## Planning and executing work
 
-Projects are planned in the vault, not in an issue tracker. `engram:plan` interviews you and creates `<Name> Overview` and `<Name> Plan`, epics (`Epics/<Name> E1 Title/<Name> E1 Title.md`) and tickets (`Epics/<Name> E1 Title/Tickets/<Name> T1 Title.md`). Each ticket is a note with a `status` (`backlog`, `todo`, `doing`, `review`, `done`, `blocked`) that links up to its epic, so the `up` chain still reaches `INDEX`. `engram:work` moves tickets along, ticks them off in the epic, and closes epics and projects when everything is done. A Dataview block in the project Overview gives a live board.
+Projects are planned in the vault, not in an issue tracker. `engram:plan` interviews you and creates `<Name> Overview` and `<Name> Plan`, epics (`Epics/<Name> E1 Title/<Name> E1 Title.md`) and tickets (`Epics/<Name> E1 Title/Tickets/<Name> T1 Title.md`). Each ticket is a note with a `status` (`backlog`, `todo`, `doing`, `review`, `done`, `blocked`, `archived`) that links up to its epic, so the `up` chain still reaches `INDEX`. `engram:work` moves tickets along, ticks them off in the epic, and closes epics and projects when everything is done. A Dataview block in the project Overview gives a live board.
 
 The bookkeeping is scripted, so it is one call instead of several hand edits, and each call rebuilds the roadmap canvas:
 
 ```bash
-engram.sh ticket "Engram T12" doing      # also: review, done, blocked; refuses if blocked_by are open (--force)
+engram.sh ticket "Engram T12" doing      # also: review, done, blocked, archived; refuses if blocked_by are open (--force)
 engram.sh close-epic "Engram E3"         # refuses while tickets are open
 engram.sh close-project "Engram"         # moves the project to the done lists
 engram.sh search gate hook               # ranked, one line per hit with its description

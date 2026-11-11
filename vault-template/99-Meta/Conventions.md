@@ -26,7 +26,7 @@ The rules that keep the vault navigable for a human and for Claude.
 ---
 type: scratch | project-overview | project-plan | epic | ticket | decision | idea | knowledge | memory | journal | overview | meta
 status: active | paused | done | archived   # projects, plans
-status: backlog | todo | doing | review | done | blocked   # epics, tickets
+status: backlog | todo | doing | review | done | blocked | archived   # epics, tickets
 tags: []
 description: one line saying what the note holds   # lets search and recall skip opening it
 up: "[[Parent Overview]]"

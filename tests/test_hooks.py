@@ -27,6 +27,9 @@ class HookTest(VaultCase):
         elsewhere = self.sh("session-start", stdin=json.dumps({"cwd": "/work/other"})).stdout
         self.assertNotIn("working in planned project", elsewhere)
         self.assertIn("doing: [[P T1 One]]", elsewhere)
+        self.write("01-Projects/P/Epics/P E1 A/Tickets/P T3 Three.md",
+                   n("ticket", "P E1 A", extra='epic: "[[P E1 A]]"\nproject: "[[P Overview]]"\n', status="archived"))
+        self.assertNotIn("P T3 Three", self.sh("session-start", stdin=json.dumps({"cwd": self.proj})).stdout)
 
     def test_prompt_is_quiet_inside_planned_project(self):
         inside = self.sh("prompt-submit", stdin=json.dumps({"prompt": "plan the next epic", "cwd": self.proj + "/src"})).stdout

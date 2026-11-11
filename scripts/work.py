@@ -97,7 +97,7 @@ def cmd_ticket(vault, query, status, force):
     names = {n["name"]: n for n in notes.values()}
     if status in ("doing", "review", "done") and not force:
         open_ = [b for b in (V.target(x.strip("[]")) for x in (t["fm"].get("blocked_by") or []) if isinstance(t["fm"].get("blocked_by"), list))
-                 if b in names and names[b]["fm"].get("status") != "done"]
+                 if b in names and names[b]["fm"].get("status") not in V.CLOSED]
         if open_:
             raise Fail("blocked by unfinished: " + ", ".join(open_) + " (use --force to override)")
     edit(vault, rel, status=status, updated=TODAY)
@@ -110,16 +110,18 @@ def cmd_ticket(vault, query, status, force):
         with open(path, encoding="utf-8") as fh:
             etext = fh.read()
         box = "x" if status == "done" else " "
-        etext = re.sub(r"(- \[)[ x](\] \[\[%s(?:\|[^\]]*)?\]\])" % re.escape(t["name"]), r"\g<1>%s\2" % box, etext)
+        if status != "archived":  # an archived ticket needs no checked box
+            etext = re.sub(r"(- \[)[ x](\] \[\[%s(?:\|[^\]]*)?\]\])" % re.escape(t["name"]), r"\g<1>%s\2" % box, etext)
         estatus = notes[erel]["fm"].get("status")
         if status in ("doing", "review") and estatus in ("backlog", "todo"):
             etext = set_key(etext, "status", "doing")
         etext = set_key(etext, "updated", TODAY)
         write(path, etext)
-        sibs = tickets_of(notes, en)
-        done = sum(1 for s in sibs if (status if s["name"] == t["name"] else s["fm"].get("status")) == "done")
+        now = {s["name"]: (status if s["name"] == t["name"] else s["fm"].get("status")) for s in tickets_of(notes, en)}
+        sibs = [n for n, st in now.items() if st != "archived"]
+        done = sum(1 for n in sibs if now[n] == "done")
         print("%s: %d of %d tickets done" % (en, done, len(sibs)))
-        if done == len(sibs):
+        if sibs and done == len(sibs):
             print("All tickets are done: ask whether to close the epic (close-epic).")
     roadmap(vault, project_of(t))
 
@@ -139,7 +141,7 @@ def replace_line(path, needle, fn):
 def cmd_close_epic(vault, query):
     notes = V.load(vault)
     rel, e = find(notes, query, "epic")
-    open_ = [t["name"] for t in tickets_of(notes, e["name"]) if t["fm"].get("status") != "done"]
+    open_ = [t["name"] for t in tickets_of(notes, e["name"]) if t["fm"].get("status") not in V.CLOSED]
     if open_:
         raise Fail("open tickets: " + ", ".join(open_))
     edit(vault, rel, status="done", updated=TODAY)

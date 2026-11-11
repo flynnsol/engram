@@ -62,6 +62,21 @@ class WorkTest(VaultCase):
         self.assertIn("[[Q Overview", self.read("INDEX.md"))
         self.assertIn("status: done", self.read("01-Projects/P/P Overview.md"))
 
+    def test_archived_ticket(self):
+        r = self.sh("ticket", "P T1", "archived")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertIn("status: archived", self.read(f"{E}/Tickets/P T1 One.md"))
+        self.assertIn("updated: ", self.read(f"{E}/Tickets/P T1 One.md"))
+        self.assertIn("- [ ] [[P T1 One]]", self.read(f"{E}/P E1 A.md"))
+        self.assertIn("0 of 1 tickets done", r.stdout)  # archived tickets leave the count
+        self.assertNotIn("checklist", self.sh("lint").stdout)
+        self.sh("ticket", "P T2", "done")
+        self.assertEqual(self.sh("close-epic", "P E1").returncode, 0)  # archived does not block closing
+        self.assertNotIn("epic is done but has open tickets", self.sh("lint").stdout)
+        canvas = json.loads(self.read("01-Projects/P/P Roadmap.canvas"))
+        colors = {n.get("file", "").split("/")[-1]: n.get("color") for n in canvas["nodes"]}
+        self.assertEqual(colors["P T1 One.md"], "#808080")
+
 
 if __name__ == "__main__":
     unittest.main()
@@ -112,6 +127,18 @@ class ReadyTest(VaultCase):
         self.assertIn("wave 1: P T1 X", r.stdout)
         self.assertIn("wave 2: P T2 X", r.stdout)
         self.assertEqual(self.sh("ready", "Nope").returncode, 1)
+
+    def test_archived_tickets_are_ignored_by_ready_and_lint(self):
+        self.ticket(1, status="archived", touches=["src/a.py"])
+        self.ticket(2, touches=["src/a.py"], blocked="P T1 X")  # archived blocker is resolved
+        r = self.sh("ready", "P")
+        self.assertIn("- P T2 X", r.stdout)
+        self.assertNotIn("P T1 X", r.stdout.replace("blocked", ""))
+        self.ticket(3, status="archived")  # no touches: would warn if it were open
+        out = self.sh("lint").stdout
+        self.assertNotIn("no touches", out)
+        self.assertNotIn("touches overlap", out)
+        self.assertNotIn("unknown role", out)
 
 
 class MigrateTest(VaultCase):

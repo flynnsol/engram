@@ -10,7 +10,7 @@ Rewrites the canvas each run; hand edits to it are lost.
 """
 import hashlib, json, os, re, sys
 
-COLORS = {"todo": "5", "doing": "3", "review": "6", "done": "4", "blocked": "1"}
+COLORS = {"todo": "5", "doing": "3", "review": "6", "done": "4", "blocked": "1", "archived": "#808080"}
 # Roomy on purpose: file cards embed the whole note, so they need height for the
 # title and breathing space; Obsidian's own inner padding can't be changed.
 COL_W, GAP, PAD = 440, 160, 60
@@ -131,7 +131,7 @@ def main(vault, project):
                           "toNode": t_id, "toSide": ts_, "toEnd": "arrow"})
 
     nodes.insert(0, {"id": nid("title"), "type": "text", "x": 0, "y": 0, "width": 640, "height": 190,
-                     "text": "# %s roadmap\n\nColor = status: cyan todo, yellow doing, purple review, green done, red blocked, none backlog. Arrows point from blocker to blocked." % project})
+                     "text": "# %s roadmap\n\nColor = status: cyan todo, yellow doing, purple review, green done, red blocked, grey archived, none backlog. Arrows point from blocker to blocked." % project})
     out = os.path.join(pdir, "%s Roadmap.canvas" % project)
     with open(out, "w", encoding="utf-8") as fh:
         json.dump({"nodes": nodes, "edges": edges}, fh, indent="\t")

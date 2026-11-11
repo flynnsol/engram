@@ -19,7 +19,8 @@ import os
 import re
 import sys
 
-STATUSES = {"backlog", "todo", "doing", "review", "done", "blocked"}
+STATUSES = {"backlog", "todo", "doing", "review", "done", "blocked", "archived"}
+CLOSED = {"done", "archived"}  # no longer open work
 ROLES = {"engineer", "reviewer", "tester"}
 SKIP_DIRS = {".obsidian", ".git", ".trash"}
 LINK = re.compile(r"\[\[([^\]|#\n]+)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]")
@@ -179,17 +180,19 @@ def lint(vault):
             m = re.search(r"- \[( |x)\] \[\[%s(?:\|[^\]]*)?\]\]" % re.escape(t["name"]), etext)
             if not m:
                 continue  # missing entry is reported by the "not listed" warning
+            if t["fm"].get("status") == "archived":
+                continue  # archived tickets may keep either box
             done = t["fm"].get("status") == "done"
             if done != (m.group(1) == "x"):
                 out.append(("error", erel, "checklist for [[%s]] is %s but the ticket is %s" % (
                     t["name"], "ticked" if m.group(1) == "x" else "unticked", t["fm"].get("status"))))
-        if notes[erel]["fm"].get("status") == "done" and any(t["fm"].get("status") != "done" for t in ts):
+        if notes[erel]["fm"].get("status") == "done" and any(t["fm"].get("status") not in CLOSED for t in ts):
             out.append(("error", erel, "epic is done but has open tickets"))
     # orchestration fields: only open tickets, and only the ones about to be worked for `touches`
     by_project = {}
     for rel, n in notes.items():
         fm = n["fm"]
-        if fm.get("type") != "ticket" or fm.get("status") == "done":
+        if fm.get("type") != "ticket" or fm.get("status") in CLOSED:
             continue
         role = fm.get("role")
         if role and role not in ROLES:
@@ -210,7 +213,7 @@ def lint(vault):
 def old_format_tickets(notes):
     """Open tickets that lack the `touches` or `role` property (planned before orchestration fields)."""
     return sorted(rel for rel, n in notes.items() if n["fm"].get("type") == "ticket"
-                  and n["fm"].get("status") != "done" and ("touches" not in n["fm"] or "role" not in n["fm"]))
+                  and n["fm"].get("status") not in CLOSED and ("touches" not in n["fm"] or "role" not in n["fm"]))
 
 
 def paths_overlap(a, b):
@@ -247,7 +250,7 @@ def blockers(ticket):
 
 def plan_waves(tickets):
     """Group open tickets into waves: wave 1 has no open blockers, wave n follows wave n-1."""
-    open_ = {t["name"]: t for t in tickets if t["fm"].get("status") != "done"}
+    open_ = {t["name"]: t for t in tickets if t["fm"].get("status") not in CLOSED}
     wave = {}
 
     def depth(name, seen=()):
@@ -283,7 +286,7 @@ def ready(vault, project, epic=None, waves=False):
         print("no tickets found for %s%s" % (project, " in " + epic if epic else ""), file=sys.stderr)
         return 1
     done = {t["name"] for t in scope if t["fm"].get("status") == "done"}
-    all_done = {n["name"] for n in notes.values() if n["fm"].get("status") == "done"}
+    all_done = {n["name"] for n in notes.values() if n["fm"].get("status") in CLOSED}
     flight = [t for t in scope if t["fm"].get("status") in ("doing", "review")]
     cands = sorted((t for t in scope if t["fm"].get("status") in ("todo", "backlog")
                     and all(b in all_done for b in blockers(t))), key=lambda t: (t["fm"].get("status") != "todo", ticket_order(t)))
@@ -334,7 +337,7 @@ def digest(vault, cwd=""):
         lines.append("- %s: [[%s]]" % (t["fm"]["status"], t["name"]))
     here = project_for_cwd(vault, cwd) if cwd else ""
     if here:
-        done = {t["name"] for t in tickets if t["fm"].get("status") == "done"}
+        done = {t["name"] for t in tickets if t["fm"].get("status") in CLOSED}
 
         def blockers_done(t):
             bb = t["fm"].get("blocked_by")
