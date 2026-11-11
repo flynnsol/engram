@@ -51,7 +51,7 @@ def nid(s):
 def num(name, letter):
     m = re.search(r"\b%s(\d+)\b" % letter, name)
     if not m and letter == "T":  # prefixed ticket names: ENG-22 Title
-        m = re.match(r"[A-Z][A-Z0-9]+-(\d+)\b", name)
+        m = re.match(r"[A-Z0-9]+-(\d+)\b", name)
     return int(m.group(1)) if m else 10**6
 
 

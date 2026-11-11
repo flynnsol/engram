@@ -67,6 +67,15 @@ class VaultToolsTest(VaultCase):
         self.assertEqual(vault.prefix_for("Go"), "GOX")
         self.assertEqual(vault.prefix_for("Dioxus Atelier", {"dio", "DAU", "DI2"}), "DI3")
 
+    def test_digit_leading_prefix_numbers_and_orders(self):
+        import sys
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
+        import vault, roadmap
+        p = vault.prefix_for("3D Printer")
+        self.assertEqual(p, "3DP")
+        self.assertEqual(vault.ticket_number(p + "-5 Title"), 5)
+        self.assertEqual(roadmap.num(p + "-7 Title", "T"), 7)
+
     def test_lint_prefix_and_kind(self):
         e = "01-Projects/P/Epics/P E1 A"
         self.write("01-Projects/P/P Overview.md", n("project-overview", "Projects Overview", "- [[P E1 A]]", extra="prefix: PPP\n"))

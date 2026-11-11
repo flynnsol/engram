@@ -308,7 +308,7 @@ def plan_waves(tickets):
 
 def ticket_number(name):
     """Project-wide ticket number from `Project T12 Title` or `ENG-12 Title`, else 9999."""
-    m = re.search(r" T(\d+) ", name) or re.match(r"[A-Z][A-Z0-9]+-(\d+) ", name)
+    m = re.search(r" T(\d+) ", name) or re.match(r"[A-Z0-9]+-(\d+) ", name)
     return int(m.group(1)) if m else 9999
 
 

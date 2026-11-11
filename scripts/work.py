@@ -288,7 +288,7 @@ def plan_renames(notes):
                 renames.append((rel, n["name"], new))
                 names.add(new)
         else:
-            m2 = re.match(r"[A-Z][A-Z0-9]+-\d+ (.+)$", n["name"])
+            m2 = re.match(r"[A-Z0-9]+-\d+ (.+)$", n["name"])
             title = m2.group(1) if m2 else title
         if not str(n["fm"].get("kind", "")).strip():
             kinds.append((rel, kind_from_title(title)))
