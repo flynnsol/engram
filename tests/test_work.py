@@ -1,4 +1,4 @@
-import json, os, unittest
+import glob, json, os, unittest
 from helpers import VaultCase
 from test_vault import n
 
@@ -183,8 +183,13 @@ class MigrateTest(VaultCase):
         before = self.read(f"{E}/Tickets/P T1 Old.md")
         r = self.sh("migrate")
         self.assertIn("Would update ticket: " + f"{E}/Tickets/P T1 Old.md", r.stdout)
-        self.assertNotIn("T2 Done", r.stdout)
-        self.assertNotIn("T3 New", r.stdout)
+        self.assertNotIn("Would update ticket: " + f"{E}/Tickets/P T2 Done.md", r.stdout)  # no old-format change
+        self.assertNotIn("Would update ticket: " + f"{E}/Tickets/P T3 New.md", r.stdout)
+        self.assertIn("Would rename ticket: P T1 Old -> PXX-1 Old", r.stdout)
+        self.assertIn("Would set prefix PXX", r.stdout)
+        self.assertIn("Would set kind feature", r.stdout)
+        self.assertFalse(glob.glob(self.vault + ".backup-*"))
+        self.assertTrue(os.path.exists(os.path.join(self.vault, E, "Tickets", "P T2 Done.md")))
         self.assertIn("Would update template: Ticket Template.md", r.stdout)
         self.assertEqual(self.read(f"{E}/Tickets/P T1 Old.md"), before)
         self.assertIn("Old format: 1 open ticket", self.sh("status").stdout)
@@ -192,12 +197,54 @@ class MigrateTest(VaultCase):
     def test_apply_is_idempotent_and_keeps_backup(self):
         r = self.sh("migrate", "--apply")
         self.assertEqual(r.returncode, 0, r.stderr)
-        t = self.read(f"{E}/Tickets/P T1 Old.md")
+        t = self.read(f"{E}/Tickets/PXX-1 Old.md")
         self.assertIn("touches: []", t)
         self.assertIn("role: engineer", t)
-        self.assertEqual(self.read(f"{E}/Tickets/P T3 New.md").count("role:"), 1)  # kept as is
+        self.assertEqual(self.read(f"{E}/Tickets/PXX-3 New.md").count("role:"), 1)  # kept as is
         self.assertIn("touches:", self.read("99-Meta/Templates/Ticket Template.md"))
         self.assertEqual(self.read("99-Meta/Templates/Ticket Template.md.bak"), "old template\n")
         self.assertIn("Nothing to migrate", self.sh("migrate").stdout)
         self.assertNotIn("Old format", self.sh("status").stdout)
         self.assertEqual(self.sh("migrate", "--bogus").returncode, 2)
+
+    def test_rename_rewrites_links_and_canvas_and_sets_kinds(self):
+        self.write(f"{E}/Tickets/P T4 Fix crash.md", n("ticket", "P E1 A", extra='epic: "[[P E1 A]]"\nproject: "[[P Overview]]"\nblocked_by: ["[[P T1 Old]]"]\n', status="todo", body="See [[P T1 Old|the first]] and [[P T1 Old#Notes]]."))
+        self.write(f"{E}/Tickets/P T5 Remove cruft.md", n("ticket", "P E1 A", extra='epic: "[[P E1 A]]"\nproject: "[[P Overview]]"\nkind: bug\n', status="done"))
+        self.write("01-Projects/P/P Notes.md", n("knowledge", "P Overview", "Link [[P T2 Done]]"))
+        canvas = {"nodes": [{"id": "a", "type": "file", "file": f"{E}/Tickets/P T1 Old.md"}, {"id": "b", "type": "text", "text": "[[P T3 New]]"}], "edges": []}
+        self.write("01-Projects/P/Other.canvas", json.dumps(canvas))
+        before = self.sh("lint").stdout.count("broken link")
+        r = self.sh("migrate", "--apply")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertTrue(os.path.exists(os.path.join(self.vault, E, "Tickets", "PXX-4 Fix crash.md")))
+        self.assertFalse(os.path.exists(os.path.join(self.vault, E, "Tickets", "P T4 Fix crash.md")))
+        t4 = self.read(f"{E}/Tickets/PXX-4 Fix crash.md")
+        self.assertIn('blocked_by: ["[[PXX-1 Old]]"]', t4)
+        self.assertIn("[[PXX-1 Old|the first]]", t4)
+        self.assertIn("[[PXX-1 Old#Notes]]", t4)
+        self.assertIn("kind: bug", t4)                                   # "Fix" -> bug
+        self.assertIn("kind: bug", self.read(f"{E}/Tickets/PXX-5 Remove cruft.md"))  # existing kind kept
+        self.assertIn("kind: feature", self.read(f"{E}/Tickets/PXX-1 Old.md"))
+        self.assertIn("[[PXX-1 Old]]", self.read(f"{E}/P E1 A.md"))
+        self.assertIn("[[PXX-2 Done]]", self.read("01-Projects/P/P Notes.md"))
+        self.assertIn("up: \"[[P E1 A]]\"", t4)                          # epic links untouched
+        self.assertIn("prefix: PXX", self.read("01-Projects/P/P Overview.md"))
+        c = self.read("01-Projects/P/Other.canvas")
+        self.assertIn("Tickets/PXX-1 Old.md", c)
+        self.assertIn("[[PXX-3 New]]", c)
+        self.assertEqual(self.sh("lint").stdout.count("broken link"), before)
+        backups = glob.glob(self.vault + ".backup-*")
+        self.assertEqual(len(backups), 1)
+        self.assertTrue(os.path.exists(os.path.join(backups[0], E, "Tickets", "P T1 Old.md")))
+        self.assertIn("Nothing to migrate", self.sh("migrate").stdout)   # idempotent
+        self.sh("migrate", "--apply")
+        self.assertEqual(len(glob.glob(self.vault + ".backup-*")), 1)    # no second backup
+
+    def test_chore_kinds_and_prefix_collision(self):
+        ex = 'epic: "[[P E1 A]]"\nproject: "[[P Overview]]"\n'
+        self.write(f"{E}/Tickets/P T6 Refactor parser.md", n("ticket", "P E1 A", extra=ex, status="todo"))
+        self.write("01-Projects/PXX/PXX Overview.md", n("project-overview", "Projects Overview", status="active"))
+        self.sh("migrate", "--apply")
+        self.assertIn("kind: chore", self.read(f"{E}/Tickets/PXX-6 Refactor parser.md"))
+        self.assertIn("prefix: PXX", self.read("01-Projects/P/P Overview.md"))   # first in name order
+        self.assertIn("prefix: PX2", self.read("01-Projects/PXX/PXX Overview.md"))  # PXX taken: numbered

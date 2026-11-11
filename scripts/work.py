@@ -11,12 +11,17 @@
 not-yet-started epic to `doing`, and refuses to start a ticket whose blockers are not done
 (--force overrides). `migrate` lists open tickets missing `touches`/`role` and vault templates that
 differ from the plugin's; with --apply it adds the fields (`touches: []`, `role: engineer`) and
-replaces changed templates, keeping a .bak copy. Every command rebuilds the project's roadmap canvas afterwards.
+replaces changed templates, keeping a .bak copy. It also gives every project Overview a `prefix`,
+renames `<Project> T12 Title` tickets to `ENG-12 Title`, rewrites every wikilink and canvas path to them and
+sets a missing `kind` from the title. --apply first copies the whole vault to a sibling `<vault>.backup-<time>`
+folder. A second run changes nothing. Every command rebuilds the project's roadmap canvas afterwards.
 """
 
 import datetime
+import json
 import os
 import re
+import shutil
 import subprocess
 import sys
 
@@ -211,6 +216,8 @@ def cmd_migrate(vault, apply):
                 cur = fh.read()
         if cur != new:
             stale.append((f, src, dst, cur is not None))
+    if apply and (old or stale or any(plan_renames(notes)[:3])):
+        print("Backup of the vault: %s" % backup_vault(vault))
     verb = "Updated" if apply else "Would update"
     for rel in old:
         fm = notes[rel]["fm"]
@@ -231,12 +238,132 @@ def cmd_migrate(vault, apply):
             with open(src, "rb") as a, open(dst, "wb") as b:
                 b.write(a.read())
         print("%s template: %s%s" % (verb, f, " (old copy kept as .bak)" if apply and exists else ""))
-    if not old and not stale:
+    np, nr, nk = migrate_names(vault, apply)
+    if not (old or stale or np or nr or nk):
         print("Nothing to migrate.")
     elif not apply:
-        print("%d ticket(s) and %d template(s) would change. Run with --apply to write." % (len(old), len(stale)))
+        print("%d ticket(s), %d template(s), %d prefix(es), %d rename(s), %d kind(s) would change. Run with --apply to write (the vault is copied first)."
+              % (len(old), len(stale), np, nr, nk))
     else:
-        print("Migrated %d ticket(s) and %d template(s)." % (len(old), len(stale)))
+        print("Migrated %d ticket(s), %d template(s), %d prefix(es), %d rename(s), %d kind(s)." % (len(old), len(stale), np, nr, nk))
+
+
+KIND_CHORE = {"refactor", "remove", "rename", "migrate"}
+
+
+def kind_from_title(title):
+    first = (title.split() or [""])[0].lower()
+    return "bug" if first == "fix" else "chore" if first in KIND_CHORE else "feature"
+
+
+def plan_renames(notes):
+    """Prefixes to set, tickets to rename and kinds to set; everything the naming migration would change."""
+    taken = {str(n["fm"].get("prefix", "")).strip() for n in notes.values()
+             if n["fm"].get("type") == "project-overview" and str(n["fm"].get("prefix", "")).strip()}
+    prefixes, new_prefix = {}, []
+    for rel, n in sorted(notes.items(), key=lambda kv: kv[1]["name"]):
+        if n["fm"].get("type") != "project-overview":
+            continue
+        proj = re.sub(r" Overview$", "", n["name"])
+        have = str(n["fm"].get("prefix", "")).strip()
+        if not have:
+            have = V.prefix_for(proj, taken)
+            taken.add(have)
+            new_prefix.append((rel, have))
+        prefixes[proj] = have
+    names = {n["name"] for n in notes.values()}
+    renames, kinds, skipped = [], [], []
+    for rel, n in sorted(notes.items()):
+        if n["fm"].get("type") != "ticket":
+            continue
+        proj = project_of(n)
+        m = re.match(r"(.+?) T(\d+) (.+)$", n["name"])
+        title = n["name"]
+        if m and proj in prefixes and m.group(1) == proj:
+            new = "%s-%s %s" % (prefixes[proj], m.group(2), m.group(3))
+            title = m.group(3)
+            if new in names:
+                skipped.append("Skipped (name taken): %s -> %s" % (n["name"], new))
+            else:
+                renames.append((rel, n["name"], new))
+                names.add(new)
+        else:
+            m2 = re.match(r"[A-Z][A-Z0-9]+-\d+ (.+)$", n["name"])
+            title = m2.group(1) if m2 else title
+        if not str(n["fm"].get("kind", "")).strip():
+            kinds.append((rel, kind_from_title(title)))
+    return new_prefix, renames, kinds, skipped
+
+
+def rewrite_links(vault, renames):
+    """Point every wikilink, `blocked_by` entry, heading and canvas path at the new names."""
+    if not renames:
+        return 0
+    new_of = {old: new for _, old, new in renames}
+    alt = "|".join(re.escape(o) for o in sorted(new_of, key=len, reverse=True))
+    link = re.compile(r"\[\[(%s)(?=[|#\]])" % alt)
+    path = re.compile(r"(?<=/)(%s)(?=\.md)" % alt)
+    changed = 0
+    for root, dirs, files in os.walk(vault):
+        dirs[:] = [d for d in dirs if d not in V.SKIP_DIRS]
+        for f in files:
+            if not f.endswith((".md", ".canvas")):
+                continue
+            p = os.path.join(root, f)
+            with open(p, encoding="utf-8") as fh:
+                text = fh.read()
+            new = link.sub(lambda m: "[[" + new_of[m.group(1)], text)
+            if f.endswith(".canvas"):
+                new = path.sub(lambda m: new_of[m.group(1)], new)
+            else:
+                old_name = f[:-3]
+                if old_name in new_of:  # the note's own title line
+                    new = new.replace("\n# " + old_name + "\n", "\n# " + new_of[old_name] + "\n", 1)
+            if new != text:
+                write(p, new)
+                changed += 1
+    return changed
+
+
+def backup_vault(vault):
+    stamp = datetime.datetime.now().strftime("%Y%m%d-%H%M%S")
+    dest = vault.rstrip("/") + ".backup-" + stamp
+    n = 1
+    while os.path.exists(dest):
+        n += 1
+        dest = "%s.backup-%s-%d" % (vault.rstrip("/"), stamp, n)
+    shutil.copytree(vault, dest)
+    return dest
+
+
+def migrate_names(vault, apply):
+    notes = V.load(vault)
+    new_prefix, renames, kinds, skipped = plan_renames(notes)
+    for line in skipped:
+        print(line)
+    verb = "Renamed" if apply else "Would rename"
+    for rel, p in new_prefix:
+        print("%s prefix %s on %s" % ("Set" if apply else "Would set", p, rel))
+    for rel, old, new in renames:
+        print("%s ticket: %s -> %s" % (verb, old, new))
+    for rel, k in kinds:
+        print("%s kind %s on %s" % ("Set" if apply else "Would set", k, rel))
+    if not apply or not (new_prefix or renames or kinds):
+        return len(new_prefix), len(renames), len(kinds)
+    for rel, p in new_prefix:
+        edit(vault, rel, prefix=p)
+    for rel, k in kinds:
+        edit(vault, rel, kind=k)
+    moved = []
+    for rel, old, new in renames:
+        dst = os.path.join(os.path.dirname(rel), new + ".md")
+        os.rename(os.path.join(vault, rel), os.path.join(vault, dst))
+        moved.append((dst, old, new))
+    print("Rewrote links in %d file(s)." % rewrite_links(vault, renames))
+    projects = {project_of(n) for rel, n in notes.items() if n["fm"].get("type") == "ticket"} - {None}
+    for proj in sorted(projects):
+        roadmap(vault, proj)
+    return len(new_prefix), len(renames), len(kinds)
 
 
 def main(argv):

@@ -63,7 +63,7 @@ engram.sh close-project "Engram"         # moves the project to the done lists
 engram.sh search gate hook               # ranked, one line per hit with its description
 engram.sh lint                           # broken links, up chains, orphans, checklist drift
 engram.sh ready "Engram" --waves          # tickets that can run in parallel, and the order
-engram.sh migrate [--apply]              # bring old tickets and templates up to date
+engram.sh migrate [--apply]              # bring old tickets and templates up to date; gives projects a prefix and renames T12 tickets to ENG-12 (backs up the vault first)
 ```
 
 ### Running tickets in parallel
