@@ -3,6 +3,11 @@
 All notable changes to the Engram plugin. Versions match `.claude-plugin/plugin.json`.
 Newest first; `tests/test_release.py` checks that the top entry matches the plugin version.
 
+## 0.8.0 - 2026-11-11
+
+- Added: every ticket has a suggested worktree branch, `<prefix>-<n>/<title>` in lowercase (`ENG-25 Add Thing` is `eng-25/add-thing`). `engram.sh ticket <t> doing|review` prints it and `ready` lists it per ticket. It is derived from the name, not stored.
+- Changed: `engram:work` tells spawned worktree agents to rename their branch to the suggested one first, and the orchestrator checks and fixes the name before review.
+
 ## 0.7.0 - 2026-11-10
 
 - Added: `archived` ticket status (`engram.sh ticket <t> archived`). Archived tickets are skipped by `ready`, the session digest, lint's open-ticket checks and `close-epic`, need no checked box, count as resolved blockers, and are grey on the roadmap.
