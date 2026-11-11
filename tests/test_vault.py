@@ -1,4 +1,4 @@
-import unittest
+import os, unittest
 from helpers import VaultCase
 
 
@@ -55,6 +55,43 @@ class VaultToolsTest(VaultCase):
         self.assertIn("epic is done but has open tickets", out)
         self.assertIn("bad status 'nope'", out)
         self.assertIn("blocked_by points at missing note", out)
+
+    def test_prefix_for(self):
+        import os, sys
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "scripts"))
+        import vault
+        self.assertEqual(vault.prefix_for("Engram"), "ENG")
+        self.assertEqual(vault.prefix_for("Dioxus Atelier UI", {"DIO"}), "DAU")
+        self.assertEqual(vault.prefix_for("Dioxus Atelier", {"DIO", "DAU"}), "DI2")
+        self.assertEqual(vault.prefix_for("Dioxus", {"DIO"}), "DI2")  # one word: no initials
+        self.assertEqual(vault.prefix_for("Go"), "GOX")
+        self.assertEqual(vault.prefix_for("Dioxus Atelier", {"dio", "DAU", "DI2"}), "DI3")
+
+    def test_lint_prefix_and_kind(self):
+        e = "01-Projects/P/Epics/P E1 A"
+        self.write("01-Projects/P/P Overview.md", n("project-overview", "Projects Overview", "- [[P E1 A]]", extra="prefix: PPP\n"))
+        self.write("01-Projects/Q/Q Overview.md", n("project-overview", "Projects Overview", extra="prefix: PPP\n"))
+        self.write("01-Projects/R/R Overview.md", n("project-overview", "Projects Overview"))
+        self.write(f"{e}/P E1 A.md", n("epic", "P Overview", "- [ ] [[P T1 One]]\n- [ ] [[P T2 Two]]\n- [ ] [[P T3 Three]]", status="doing"))
+        ex = 'epic: "[[P E1 A]]"\n'
+        self.write(f"{e}/Tickets/P T1 One.md", n("ticket", "P E1 A", extra=ex + "kind: bug\n", status="todo"))
+        self.write(f"{e}/Tickets/P T2 Two.md", n("ticket", "P E1 A", extra=ex + "kind: epic\n", status="todo"))
+        self.write(f"{e}/Tickets/P T3 Three.md", n("ticket", "P E1 A", extra=ex, status="todo"))
+        rc, out = self.lint()
+        self.assertEqual(rc, 1)
+        self.assertIn("duplicate prefix 'PPP'", out)
+        self.assertIn("R Overview.md: missing prefix", out)
+        self.assertIn("P T2 Two.md: bad kind 'epic'", out)
+        self.assertIn("P T3 Three.md: missing kind", out)
+        self.assertNotIn("P T1 One.md: bad kind", out)
+        self.assertNotIn("P T1 One.md: missing kind", out)
+
+    def test_templates_have_prefix_and_kind(self):
+        t = os.path.join(self.vault, "99-Meta", "Templates")
+        with open(os.path.join(t, "Ticket Template.md")) as fh:
+            self.assertIn("kind: feature", fh.read())
+        with open(os.path.join(t, "Project Overview Template.md")) as fh:
+            self.assertIn("prefix:", fh.read())
 
     def test_status_reports_lint(self):
         self.assertIn("Lint: 0 error(s)", self.sh("status").stdout)

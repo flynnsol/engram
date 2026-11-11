@@ -37,6 +37,8 @@ updated: YYYY-MM-DD
 
 Write a `description` on every non-overview note: one plain sentence, under 120 characters. `engram.sh search` and `engram:recall` show it instead of opening the note.
 
+Project overviews carry `prefix` (a unique 3-letter ticket prefix, for example `ENG`); tickets carry `kind: feature | bug | chore` (feature = net new addition, bug = bug fix, chore = necessary cleanup that adds no feature).
+
 Memory notes also carry `memory_type: user | feedback | project | reference`. Update `updated` on every edit.
 
 ## Structure

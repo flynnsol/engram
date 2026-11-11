@@ -22,6 +22,7 @@ import sys
 STATUSES = {"backlog", "todo", "doing", "review", "done", "blocked", "archived"}
 CLOSED = {"done", "archived"}  # no longer open work
 ROLES = {"engineer", "reviewer", "tester"}
+KINDS = {"feature", "bug", "chore"}
 SKIP_DIRS = {".obsidian", ".git", ".trash"}
 LINK = re.compile(r"\[\[([^\]|#\n]+)(?:#[^\]|]*)?(?:\|[^\]]*)?\]\]")
 CODE = re.compile(r"```.*?```|`[^`\n]*`", re.S)
@@ -108,6 +109,22 @@ def search(vault, terms, limit=20):
     return len(hits)
 
 
+def prefix_for(project, taken=()):
+    """Ticket prefix for a project: first 3 letters upper-case; if taken, the initials of its words; then a numbered fallback."""
+    taken = {t.upper() for t in taken}
+    words = re.findall(r"[A-Za-z0-9]+", project)
+    letters = "".join(words) or "X"
+    first = letters[:3].upper().ljust(3, "X")
+    initials = "".join(w[0] for w in words)[:3].upper()
+    for cand in (first, initials if len(initials) == 3 else ""):
+        if cand and cand not in taken:
+            return cand
+    i = 2
+    while "%s%d" % (first[:2], i) in taken:
+        i += 1
+    return "%s%d" % (first[:2], i)
+
+
 def lint(vault):
     """Return a list of (level, rel path, message)."""
     notes = load(vault)
@@ -188,6 +205,24 @@ def lint(vault):
                     t["name"], "ticked" if m.group(1) == "x" else "unticked", t["fm"].get("status"))))
         if notes[erel]["fm"].get("status") == "done" and any(t["fm"].get("status") not in CLOSED for t in ts):
             out.append(("error", erel, "epic is done but has open tickets"))
+    # project prefixes (unique) and ticket kinds
+    seen_prefix = {}
+    for rel, n in notes.items():
+        fm = n["fm"]
+        if fm.get("type") == "project-overview":
+            p = str(fm.get("prefix", "")).strip()
+            if not p:
+                out.append(("warn", rel, "missing prefix: (run migrate, or set a 3-letter prefix)"))
+            elif p in seen_prefix:
+                out.append(("error", rel, "duplicate prefix '%s' also used by %s" % (p, seen_prefix[p])))
+            else:
+                seen_prefix[p] = rel
+        elif fm.get("type") == "ticket" and fm.get("status") not in CLOSED:
+            k = str(fm.get("kind", "")).strip()
+            if not k:
+                out.append(("warn", rel, "missing kind: (use %s)" % ", ".join(sorted(KINDS))))
+            elif k not in KINDS:
+                out.append(("error", rel, "bad kind '%s' (use %s)" % (k, ", ".join(sorted(KINDS)))))
     # orchestration fields: only open tickets, and only the ones about to be worked for `touches`
     by_project = {}
     for rel, n in notes.items():

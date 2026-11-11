@@ -10,6 +10,7 @@ estimate_days:
 blocked_by: []
 touches: []
 role: engineer
+kind: feature
 created: {{date}}
 updated: {{date}}
 ---
