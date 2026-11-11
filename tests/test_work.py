@@ -41,6 +41,15 @@ class WorkTest(VaultCase):
         self.assertNotIn("checklist", self.sh("lint").stdout)
         self.assertTrue(os.path.exists(os.path.join(self.vault, "01-Projects/P/P Roadmap.canvas")))
 
+    def test_suggested_branch(self):
+        import vault as V
+        self.assertEqual(V.branch_name("ENG-25 Add Branch Names"), "eng-25/add-branch-names")
+        self.assertEqual(V.branch_name("DAU2-7 Fix: the `Kbd` bug!"), "dau2-7/fix-the-kbd-bug")
+        self.assertEqual(V.branch_name("Engram T12 Old Name"), "engram-t12/old-name")
+        r = self.sh("ticket", "P T1", "doing")
+        self.assertIn("Suggested branch: p-t1/one", r.stdout)
+        self.assertNotIn("Suggested branch", self.sh("ticket", "P T1", "done").stdout)
+
     def test_bad_input(self):
         self.assertEqual(self.sh("ticket", "P T1", "finished").returncode, 1)
         self.assertEqual(self.sh("ticket", "P T9", "done").returncode, 1)
@@ -126,7 +135,7 @@ class ReadyTest(VaultCase):
         self.ticket(4, touches=["docs/x.md"], blocked="P T1 X")  # blocked: not ready
         r = self.sh("ready", "P")
         self.assertIn("Ready now (2", r.stdout)
-        self.assertIn("- P T1 X | role=engineer | touches=src/a.py", r.stdout)
+        self.assertIn("- P T1 X | role=engineer | touches=src/a.py | branch=p-t1/x", r.stdout)
         self.assertIn("Held: P T3 X collides with P T1 X on src ~ src/a.py", r.stdout)
         self.assertNotIn("- P T4 X", r.stdout)
 

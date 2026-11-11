@@ -13,7 +13,7 @@ Statuses: `backlog` → `todo` → `doing` → `review` → `done`, optional `bl
 
 `${CLAUDE_PLUGIN_ROOT}/scripts/engram.sh` does the mechanical bookkeeping and rebuilds the roadmap canvas each time:
 
-- `ticket "ENG-12" <status> [--force]` (also `"Engram T12"` for older names): sets the status, bumps `updated`, ticks or unticks the epic's checklist line, starts the epic (`doing`) with its first active ticket, and refuses to start a ticket whose `blocked_by` are not done. Prints `n of m tickets done`.
+- `ticket "ENG-12" <status> [--force]` (also `"Engram T12"` for older names): sets the status, bumps `updated`, ticks or unticks the epic's checklist line, starts the epic (`doing`) with its first active ticket, and refuses to start a ticket whose `blocked_by` are not done. Prints `n of m tickets done`, and for `doing`/`review` the suggested worktree branch (`eng-25/add-thing`; `ready` lists it too). Use it as the branch name.
 - `ready "<Project>" [--epic "<epic>"] [--waves]`: read-only. Lists the tickets that can start now (not blocked, `touches` disjoint from each other and from work in flight) with their `role`, and why any other is held. `--waves` prints the epic's waves. A ticket with no `touches` is treated as colliding with everything.
 - `close-epic "<Project> E3"`: refuses while tickets are open; sets the epic `done`, marks it in the project Overview, and says how many *Done when* items are still unticked.
 - `close-project "<Project>"`: refuses while epics are open; sets the Overview `done` and moves it to the done lists in `[[Projects Overview]]` and `[[INDEX]]`.
@@ -39,17 +39,17 @@ TABLE status, epic, estimate_days FROM "01-Projects/<Name>" WHERE type = "ticket
 Use this when `engram.sh ready` returns two or more tickets. For one ticket, use *Start a ticket*.
 
 1. Run `engram.sh ready "<Project>"`. Confirm the batch with the user the first time.
-2. For each ticket, run `engram.sh ticket "<ticket>" doing`, then spawn one subagent in its own git worktree (`isolation: "worktree"`), in a single message so they run together.
-3. Choose the agent by the ticket's `role`: an installed agent whose name matches (`engineer`, `reviewer`, `tester`, for example from a separate agents plugin), else `general-purpose`. Brief it with the ticket text, its *Acceptance* checks, its `touches`, and the rule: stay inside `touches`, make one commit, do not touch the vault.
+2. For each ticket, run `engram.sh ticket "<ticket>" doing`, note the `Suggested branch` it prints, then spawn one subagent in its own git worktree (`isolation: "worktree"`), in a single message so they run together.
+3. Choose the agent by the ticket's `role`: an installed agent whose name matches (`engineer`, `reviewer`, `tester`, for example from a separate agents plugin), else `general-purpose`. Brief it with the ticket text, its *Acceptance* checks, its `touches`, and the rule: stay inside `touches`, make one commit, do not touch the vault. Put the branch rule first in the brief, as its first command: "Before any other change, run `git branch -m <suggested branch>` in your worktree and commit on that branch. Do not use any other branch name." (the harness gives a worktree an auto-generated branch, so the agent renames it).
 4. **Only you (the orchestrator) change ticket status or write to the vault.** Subagents report back; you run `engram.sh ticket`.
 5. When a subagent finishes, run `engram.sh ticket "<ticket>" review` and send the diff to a `reviewer` agent (else `general-purpose`) to check it against *Acceptance*. Pass: merge, then `done`. Fail: back to `doing` with the findings, one retry, then ask the user.
-6. Merge the worktree branches one at a time, run the tests after each, then run `engram.sh ready` again for the next wave.
+6. Check each returned branch is the suggested name (`git branch --list`); if an agent ignored it, rename it with `git branch -m` before reviewing or merging. Then merge the worktree branches one at a time, run the tests after each, then run `engram.sh ready` again for the next wave.
 
 ## Start a ticket
 
 1. Confirm which ticket (from the user's words, branch name, or the next unblocked one). Read it and its epic.
 2. Check `blocked_by` are done; if not, say so and ask.
-3. Run `engram.sh ticket "<ticket>" doing`, and work it. Keep to one commit or PR under 200 lines and 5 files; if it is growing past that, stop and split it (new tickets via `engram:plan`).
+3. Run `engram.sh ticket "<ticket>" doing`, and work it on the `Suggested branch` it prints (`git switch -c <branch>`, or in a worktree, `git worktree add -b <branch> ../<dir>`). Keep to one commit or PR under 200 lines and 5 files; if it is growing past that, stop and split it (new tickets via `engram:plan`).
 4. When opening a PR, run `engram.sh ticket "<ticket>" review` and note the commit or PR link under *Notes*.
 
 ## Ticket done

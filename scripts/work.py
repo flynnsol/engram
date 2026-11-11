@@ -107,6 +107,8 @@ def cmd_ticket(vault, query, status, force):
             raise Fail("blocked by unfinished: " + ", ".join(open_) + " (use --force to override)")
     edit(vault, rel, status=status, updated=TODAY)
     print("%s: %s -> %s" % (t["name"], t["fm"].get("status", "?"), status))
+    if status in ("doing", "review"):
+        print("Suggested branch: " + V.branch_name(t["name"]))
     eps = V.links(t["fm"].get("epic", ""))
     if eps and V.target(eps[0]) in names:
         en = V.target(eps[0])

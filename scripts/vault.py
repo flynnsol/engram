@@ -312,6 +312,14 @@ def ticket_number(name):
     return int(m.group(1)) if m else 9999
 
 
+def branch_name(name):
+    """Suggested worktree branch for a ticket: `ENG-25 Add Thing` -> `eng-25/add-thing` (old `Engram T12 Title` -> `engram-t12/title`)."""
+    m = re.match(r"(.+? T\d+|[A-Z0-9]+-\d+) (.+)$", name)
+    head, title = (m.group(1), m.group(2)) if m else (name, "")
+    slug = lambda s: re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")
+    return "%s/%s" % (slug(head), slug(title)) if slug(title) else slug(head)
+
+
 def ticket_order(t):
     return (ticket_number(t["name"]), t["name"])
 
@@ -345,7 +353,7 @@ def ready(vault, project, epic=None, waves=False):
     print("In flight: %s" % (", ".join(t["name"] for t in flight) or "none"))
     print("Ready now (%d, safe to run in parallel):" % len(batch))
     for t in batch:
-        print("- %s | role=%s | touches=%s" % (t["name"], t["fm"].get("role") or "engineer", ", ".join(touches_of(t)) or "none"))
+        print("- %s | role=%s | touches=%s | branch=%s" % (t["name"], t["fm"].get("role") or "engineer", ", ".join(touches_of(t)) or "none", branch_name(t["name"])))
     for t, (o, why) in held:
         print("Held: %s collides with %s on %s" % (t["name"], o["name"], why))
     return 0 if batch else 1
