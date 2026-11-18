@@ -3,6 +3,10 @@
 All notable changes to the Engram plugin. Versions match `.claude-plugin/plugin.json`.
 Newest first; `tests/test_release.py` checks that the top entry matches the plugin version.
 
+## 0.8.1 - 2026-11-17
+
+- Changed: `engram:work` removes each subagent worktree (`git worktree remove`) and deletes its branch (`git branch -d`, never `-D`) after a clean merge with green tests; on a failed merge or failing tests it keeps the worktree and reports its path.
+
 ## 0.8.0 - 2026-11-11
 
 - Added: every ticket has a suggested worktree branch, `<prefix>-<n>/<title>` in lowercase (`ENG-25 Add Thing` is `eng-25/add-thing`). `engram.sh ticket <t> doing|review` prints it and `ready` lists it per ticket. It is derived from the name, not stored.
